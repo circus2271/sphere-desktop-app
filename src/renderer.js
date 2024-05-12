@@ -42,3 +42,55 @@ setButton.addEventListener('click', () => {
 window.electronAPI.onTimeUpdate((value) => {
     console.log(value)
 })
+
+// drag and drop
+
+const container = document.querySelector('.container')
+
+container.addEventListener('dragenter', (e) => {
+    container.classList.add('active')
+})
+
+container.addEventListener('dragleave', (e) => {
+    if (e.target === container)
+    container.classList.remove('active')
+})
+
+// container.addEventListener('click', (e) => {
+//   container.classList.toggle('active')
+// })
+
+
+container.addEventListener('dragover', e => {
+    // without this an image will be opened in a new tab
+    e.preventDefault()
+})
+
+container.addEventListener('drop', e => {
+    // without this an image will be opened in a new tab
+    e.preventDefault()
+
+    console.log('sfd')
+    const files = e.dataTransfer.files
+    const filenames =[]
+    // console.log(files[0])
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        console.log(file.name)
+        filenames.push(file.name)
+//        filenames.push(file.path)
+    }
+
+//    const fileNames = files.map(file => file.name)
+    window.electronAPI.sendFileNames(filenames)
+
+    container.classList.remove('active')
+})
+
+// container.addEventListener('dragover', (e) => {
+//   e.preventDefault()
+//   e.stopPropagation();
+//   e.preventDefault();
+//   container.classList.add('active')
+//  // console.log('dragover') container.classList.remove('active')
+// })

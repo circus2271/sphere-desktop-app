@@ -33,6 +33,14 @@ const createWindow = () => {
     }, 1000)
   })
 
+  ipcMain.on('filenames', (_event, filenames) =>{
+    console.log('recieved filenames: ')
+    for (let i = 0; i < filenames.length; i++) {
+      const filename =  filenames[i]
+      console.log(filename)
+    }
+  })
+
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
