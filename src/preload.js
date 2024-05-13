@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     requestTimeUpdate: () => ipcRenderer.send('request-time-update'),
     onTimeUpdate: (callback) => ipcRenderer.on('time-update', (_event, value) => callback(value)),
     sendFileNames: (filenames) => ipcRenderer.send('filenames', filenames),
+    // sending files this way doesn't work
+//    sendFiles: (files) => ipcRenderer.send('files', files),
+    sendFilePaths: (paths) => ipcRenderer.send('file paths', paths),
 })
 
