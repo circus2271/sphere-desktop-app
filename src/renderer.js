@@ -106,3 +106,25 @@ window.electronAPI.sendFilePaths(filePaths)
 //   container.classList.add('active')
 //  // console.log('dragover') container.classList.remove('active')
 // })
+
+
+
+window.electronAPI.onMetaDataRecieve((data) => {
+    console.log('metadata', data)
+    // const images = data.map(dataItem => {
+    data.forEach(dataItem => {
+        const buffer = dataItem.value.image.imageBuffer;
+        const blob = new Blob([buffer]);
+        const objectURL = URL.createObjectURL(blob)
+
+        const image = new Image();
+        image.style.height = '200px'
+        image.style.width = '200px'
+        image.onload = () => image.classList.add('loaded')
+        image.src = objectURL
+
+        document.body.prepend(image)
+    })
+})
+
+// alert(32443)

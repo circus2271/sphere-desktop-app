@@ -65,24 +65,55 @@ const createWindow = () => {
     }
   })
 
-  ipcMain.on('file paths', (_event, filePaths) =>{
+  ipcMain.on('file paths', async  (_event, filePaths) =>{
     console.log('recieved filePaths: ')
-    for (let i = 0; i < filePaths.length; i++) {
-      const path =  filePaths[i]
-      console.log(path)
+    let counter = 0;
+    // console.log('typeof filepaths')
+    const promises = filePaths.map(filepath => {
+      return new Promise((resolve, reject) => {
+        NodeID3.read(filepath, function(error, tags) {
+          if (error) {
+            console.error(err);
+            reject(error)
+          } else {
+            console.log(tags)
+            // const durationInSeconds = tags.duration;
+            // const durationInSeconds = tags.length / 1000 ;
+            // console.log('Duration of the audio file:', durationInSeconds, 'seconds');
+            resolve(tags)
+          }
+        })
+      })
+    })
 
-      const audioFilePath = path;
-      NodeID3.read(audioFilePath, function(err, tags) {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(tags)
-          // const durationInSeconds = tags.duration;
-          const durationInSeconds = tags.length / 1000 ;
-          console.log('Duration of the audio file:', durationInSeconds, 'seconds');
-        }
-      });
-    }
+    // const data = await Promise.allSettled(promises)
+    const metadata = await Promise.allSettled(promises)
+    // console.log('data..', data)
+    console.log('data..', metadata)
+    mainWindow.webContents.send('metadata', metadata)
+    //
+    // for (let i = 0; i < filePaths.length; i++) {
+    //   const path =  filePaths[i]
+    //   console.log(path)
+    //
+    //   const audioFilePath = path;
+    //
+    //   // const tags = NodeID3.read(audioFilePath, function(err, tags) {
+    //   //   if (err) {
+    //   //     console.error(err);
+    //   //   } else {
+    //   //     console.log(tags)
+    //   //     // const durationInSeconds = tags.duration;
+    //   //     const durationInSeconds = tags.length / 1000 ;
+    //   //     console.log('Duration of the audio file:', durationInSeconds, 'seconds');
+    //   //   }
+    //   // });
+    //
+    //   console.log('originalfilename', tags.originalFilename)
+    //   console.log('counter', ++counter)
+    //
+    //
+    // }
   })
 
 //  ipcMain.on('files', (_event, files) =>{

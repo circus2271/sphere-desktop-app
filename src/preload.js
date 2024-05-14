@@ -12,5 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // sending files this way doesn't work
 //    sendFiles: (files) => ipcRenderer.send('files', files),
     sendFilePaths: (paths) => ipcRenderer.send('file paths', paths),
+    onMetaDataRecieve: (callback) => ipcRenderer.on('metadata', (_event, dataArray) => callback(dataArray))
 })
 
