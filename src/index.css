@@ -37,6 +37,25 @@ body {
   }
 }
 
+.placeholder {
+  --size: 200px;
+
+  height: var(--size);
+  width: var(--size);
+  position: relative;
+  background: #eee;
+
+  &::before {
+    position: absolute;
+    /*content: '';*/
+    content: 'no cover';
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /*background: green;*/
+  }
+}
+
 .images {
   display: flex;
   gap: 1.25rem;

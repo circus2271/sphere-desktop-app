@@ -78,6 +78,11 @@ container.addEventListener('drop', e => {
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         console.log(file.name)
+        const notAnMp3 = !file.name.endsWith('.mp3');
+        if (notAnMp3) {
+            console.warn('file is not mp3')
+            continue
+        }
         console.log(file.path)
         window.filepath = file.path
         filenames.push(file.name)
@@ -113,6 +118,22 @@ window.electronAPI.onMetaDataRecieve((data) => {
     console.log('metadata', data)
     // const images = data.map(dataItem => {
     data.forEach(dataItem => {
+        // const hasCover = !!dataItem.value.image
+        // if dataItem.value.image exists
+        const hasCover = dataItem.value.hasOwnProperty('image')
+        if (!hasCover) {
+            // alert('no cover')
+            const placeholder = document.createElement('div')
+
+            placeholder.classList.add('placeholder')
+            // placeholder.style.height = '200px'
+            // placeholder.style.width = '200px'
+            // placeholder.classList.add('without-cover')
+            document.body.prepend(placeholder)
+
+            return
+        }
+
         const buffer = dataItem.value.image.imageBuffer;
         const blob = new Blob([buffer]);
         const objectURL = URL.createObjectURL(blob)
@@ -122,7 +143,7 @@ window.electronAPI.onMetaDataRecieve((data) => {
         image.style.width = '200px'
         image.onload = () => image.classList.add('loaded')
         image.src = objectURL
-
+0
         document.body.prepend(image)
     })
 })
