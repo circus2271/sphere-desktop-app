@@ -26,7 +26,7 @@
  * ```
  */
 
-import './index.css';
+import './index.scss';
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
@@ -80,7 +80,7 @@ container.addEventListener('drop', e => {
         console.log(file.name)
         const notAnMp3 = !file.name.endsWith('.mp3');
         if (notAnMp3) {
-            console.warn('file is not mp3')
+            console.warn(`file: '${file.name}' isn't an mp3`)
             continue
         }
         console.log(file.path)
@@ -149,3 +149,4 @@ window.electronAPI.onMetaDataRecieve((data) => {
 })
 
 // alert(32443)
+

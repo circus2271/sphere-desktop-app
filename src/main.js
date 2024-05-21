@@ -1,29 +1,19 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const NodeID3 = require('node-id3');
-const fs = require('fs');
-
-
-// const audioFilePath = 'path/to/your/audio/file.mp3';
-// const audioFilePath = 'D:\\╨┐╤С╤Б ╨╕ ╨│╤А╤Г╨┐╨┐╨░ - 2011 - ╨Ф╨▓╨░ ╨╗╨╕╤Ж╨░\\05. ╨б╨░╨╝╨╛╨╗╤С╤В.flac\n';
-// const audioFilePath = 'D%3A%5C%D0%BF%D1%91%D1%81%20%D0%B8%20%D0%B3%D1%80%D1%83%D0%BF%D0%BF%D0%B0%20-%202011%20-%20%D0%94%D0%B2%D0%B0%20%D0%BB%D0%B8%D1%86%D0%B0%5C05.%20%D0%A1%D0%B0%D0%BC%D0%BE%D0%BB%D1%91%D1%82.flac';
-// const audioFilePath = `D:\пёс и группа - 2011 - Два лица\09. Постарайся не забывать.flac`
+// const {createAirtableData} = require("helpers/index.js");
+// const {createAirtableData} = require("helpers/index.js");
+const helpers = require('./helpers/index');
+// const helpers = require('./index.js');
 //
-// NodeID3.read(audioFilePath, function(err, tags) {
-//   if (err) {
-//     console.error(err);
-//   } else {
-//     const durationInSeconds = tags.duration;
-//     console.log('Duration of the audio file:', durationInSeconds, 'seconds');
-//   }
-// });
-//
-// const filePath = 'C:\\Users\\Username\\Documents\\файл.txt'; // Example file path with Russian symbols
-// const filePath = 'C:\\Users\\user\\Pictures\\╨д╨╛╨╜╨╛╨▓╤Л╨╡ ╨╕╨╖╨╛╨▒╤А╨░╨╢╨╡╨╜╨╕╤П ╤А╨░╨▒╨╛╤З╨╡╨│╨╛ ╤Б╤В╨╛╨╗╨░\\dsfsdfsd.jpg\n'
-// const normalizedPath = path.normalize(filePath);
-// const readablePath = path.resolve(normalizedPath);
-// console.log('p', readablePath)
-// process.stdout.setEncoding('utf8');
+// const {createAirtableData} = helpers
+require('dotenv').config();
+
+const config = {
+  // apiKey: process.env.API_KEY,
+  PERSONAL_ACCESS_TOKEN: process.env.PERSONAL_ACCESS_TOKEN,
+  baseId: process.env.BASE_ID
+};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -65,6 +55,17 @@ const createWindow = () => {
     }
   })
 
+  ipcMain.on('upload-playlist', (_event, playlistMetaData) =>{
+    console.log('upload-playlist: playlist recieved')
+
+    // const airtableData = createAirtableData(playlistMetaData)
+    // send this data to airtable to create records
+
+    // console.log('playlist length:', playlistMetaData.length)
+    // console.log('records11', records)
+
+  })
+
   ipcMain.on('file paths', async  (_event, filePaths) =>{
     console.log('recieved filePaths: ')
     let counter = 0;
@@ -86,43 +87,26 @@ const createWindow = () => {
       })
     })
 
-    // const data = await Promise.allSettled(promises)
     const metadata = await Promise.allSettled(promises)
-    // console.log('data..', data)
     console.log('data..', metadata)
     mainWindow.webContents.send('metadata', metadata)
-    //
-    // for (let i = 0; i < filePaths.length; i++) {
-    //   const path =  filePaths[i]
-    //   console.log(path)
-    //
-    //   const audioFilePath = path;
-    //
-    //   // const tags = NodeID3.read(audioFilePath, function(err, tags) {
-    //   //   if (err) {
-    //   //     console.error(err);
-    //   //   } else {
-    //   //     console.log(tags)
-    //   //     // const durationInSeconds = tags.duration;
-    //   //     const durationInSeconds = tags.length / 1000 ;
-    //   //     console.log('Duration of the audio file:', durationInSeconds, 'seconds');
-    //   //   }
-    //   // });
-    //
-    //   console.log('originalfilename', tags.originalFilename)
-    //   console.log('counter', ++counter)
-    //
-    //
-    // }
+
+    const dataToUpload = metadata.map(async data => {
+      const buffer = data.value.image.imageBuffer
+      const convertedToBase64 = buffer.toString('base64')
+      const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
+      // get file type of an image by using "file-type" nodejs library
+      const fileType = fileTypeFromBuffer(buffer).mime
+
+      return {
+
+      }
+      // console.log('converted', converted)
+      // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
+    })
+    console.log('data..', data)
   })
 
-//  ipcMain.on('files', (_event, files) =>{
-//    console.log('recieved files: ')
-//    for (let i = 0; i < files.length; i++) {
-//      const file =  files[i]
-//      console.log(file.path)
-//    }
-//  })
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -161,3 +145,31 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+// function createAirtableData (playlistMetaData) {
+//     const data = playlistMetaData.map(songData => {
+//         const buffer = songData.value.image.imageBuffer
+//         const converted = buffer.toString('base64')
+//         const dataURL = `data:application/octet-stream;base64,${converted}`
+//
+//         return {
+//             filename: 'blabla',
+//             image: [
+//                 {
+//                     url: dataURL,
+//                     filename: 'blabla image filename',
+//                     // type: 'image/jpeg'
+//                     type: songData.value.image.mime
+//                 }
+//             ],
+//             duration: songData.value.duration
+//         }
+//         // console.log('converted', converted)
+//         // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
+//     })
+//
+//     const airtableData = JSON.stringify({
+//         records: data
+//     })
+//
+//     return airtableData
+// }
