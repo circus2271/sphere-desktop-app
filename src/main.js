@@ -1,21 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const NodeID3 = require('node-id3');
-// const {createAirtableData} = require("helpers/index.js");
-// const {createAirtableData} = require("helpers/index.js");
-// const helpers = require('./helpers/index');
 const helpers = require('./index.js');
-const {createAirtableData} = helpers
-// const helpers = require('./index.js');
+const {createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable} = require("./helpers");
 
-createAirtableData()//
-require('dotenv').config();
-
-const config = {
-  // apiKey: process.env.API_KEY,
-  PERSONAL_ACCESS_TOKEN: process.env.PERSONAL_ACCESS_TOKEN,
-  baseId: process.env.BASE_ID
-};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -68,46 +55,19 @@ const createWindow = () => {
 
   })
 
-  // ipcMain.on('file paths', async  (_event, filePaths) =>{
-  //   console.log('recieved filePaths: ')
-  //   let counter = 0;
-  //   // console.log('typeof filepaths')
-  //   const promises = filePaths.map(filepath => {
-  //     return new Promise((resolve, reject) => {
-  //       NodeID3.read(filepath, function(error, tags) {
-  //         if (error) {
-  //           console.error(err);
-  //           reject(error)
-  //         } else {
-  //           console.log(tags)
-  //           // const durationInSeconds = tags.duration;
-  //           // const durationInSeconds = tags.length / 1000 ;
-  //           // console.log('Duration of the audio file:', durationInSeconds, 'seconds');
-  //           resolve(tags)
-  //         }
-  //       })
-  //     })
-  //   })
-  //
-  //   const metadata = await Promise.allSettled(promises)
-  //   console.log('data..', metadata)
-  //   mainWindow.webContents.send('metadata', metadata)
-  //
-  //   const dataToUpload = metadata.map(async data => {
-  //     const buffer = data.value.image.imageBuffer
-  //     const convertedToBase64 = buffer.toString('base64')
-  //     const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
-  //     // get file type of an image by using "file-type" nodejs library
-  //     const fileType = fileTypeFromBuffer(buffer).mime
-  //
-  //     return {
-  //
-  //     }
-  //     // console.log('converted', converted)
-  //     // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
-  //   })
-  //   console.log('data..', data)
-  // })
+  ipcMain.on('file paths', async  (_event, filePaths) =>{
+    console.log('recieved filePaths: ')
+    let counter = 0;
+    // console.log('typeof filepaths')
+    const metadata = await parseMetadataFromImages(filePaths)
+    console.log('data..', metadata)
+    mainWindow.webContents.send('metadata', metadata)
+
+    const dataToUpload = createAirtableData(metadata);
+
+    // upload this data to airtable as json
+    const response = await uploadPlaylistDataToAirtable(dataToUpload)
+  })
 
 
   // and load the index.html of the app.
@@ -145,33 +105,3 @@ app.on('window-all-closed', () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
-// function createAirtableData (playlistMetaData) {
-//     const data = playlistMetaData.map(songData => {
-//         const buffer = songData.value.image.imageBuffer
-//         const converted = buffer.toString('base64')
-//         const dataURL = `data:application/octet-stream;base64,${converted}`
-//
-//         return {
-//             filename: 'blabla',
-//             image: [
-//                 {
-//                     url: dataURL,
-//                     filename: 'blabla image filename',
-//                     // type: 'image/jpeg'
-//                     type: songData.value.image.mime
-//                 }
-//             ],
-//             duration: songData.value.duration
-//         }
-//         // console.log('converted', converted)
-//         // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
-//     })
-//
-//     const airtableData = JSON.stringify({
-//         records: data
-//     })
-//
-//     return airtableData
-// }
