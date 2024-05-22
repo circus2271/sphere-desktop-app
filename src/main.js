@@ -3,10 +3,12 @@ const path = require('path');
 const NodeID3 = require('node-id3');
 // const {createAirtableData} = require("helpers/index.js");
 // const {createAirtableData} = require("helpers/index.js");
-const helpers = require('./helpers/index');
+// const helpers = require('./helpers/index');
+const helpers = require('./index.js');
+const {createAirtableData} = helpers
 // const helpers = require('./index.js');
-//
-// const {createAirtableData} = helpers
+
+createAirtableData()//
 require('dotenv').config();
 
 const config = {
@@ -66,46 +68,46 @@ const createWindow = () => {
 
   })
 
-  ipcMain.on('file paths', async  (_event, filePaths) =>{
-    console.log('recieved filePaths: ')
-    let counter = 0;
-    // console.log('typeof filepaths')
-    const promises = filePaths.map(filepath => {
-      return new Promise((resolve, reject) => {
-        NodeID3.read(filepath, function(error, tags) {
-          if (error) {
-            console.error(err);
-            reject(error)
-          } else {
-            console.log(tags)
-            // const durationInSeconds = tags.duration;
-            // const durationInSeconds = tags.length / 1000 ;
-            // console.log('Duration of the audio file:', durationInSeconds, 'seconds');
-            resolve(tags)
-          }
-        })
-      })
-    })
-
-    const metadata = await Promise.allSettled(promises)
-    console.log('data..', metadata)
-    mainWindow.webContents.send('metadata', metadata)
-
-    const dataToUpload = metadata.map(async data => {
-      const buffer = data.value.image.imageBuffer
-      const convertedToBase64 = buffer.toString('base64')
-      const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
-      // get file type of an image by using "file-type" nodejs library
-      const fileType = fileTypeFromBuffer(buffer).mime
-
-      return {
-
-      }
-      // console.log('converted', converted)
-      // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
-    })
-    console.log('data..', data)
-  })
+  // ipcMain.on('file paths', async  (_event, filePaths) =>{
+  //   console.log('recieved filePaths: ')
+  //   let counter = 0;
+  //   // console.log('typeof filepaths')
+  //   const promises = filePaths.map(filepath => {
+  //     return new Promise((resolve, reject) => {
+  //       NodeID3.read(filepath, function(error, tags) {
+  //         if (error) {
+  //           console.error(err);
+  //           reject(error)
+  //         } else {
+  //           console.log(tags)
+  //           // const durationInSeconds = tags.duration;
+  //           // const durationInSeconds = tags.length / 1000 ;
+  //           // console.log('Duration of the audio file:', durationInSeconds, 'seconds');
+  //           resolve(tags)
+  //         }
+  //       })
+  //     })
+  //   })
+  //
+  //   const metadata = await Promise.allSettled(promises)
+  //   console.log('data..', metadata)
+  //   mainWindow.webContents.send('metadata', metadata)
+  //
+  //   const dataToUpload = metadata.map(async data => {
+  //     const buffer = data.value.image.imageBuffer
+  //     const convertedToBase64 = buffer.toString('base64')
+  //     const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
+  //     // get file type of an image by using "file-type" nodejs library
+  //     const fileType = fileTypeFromBuffer(buffer).mime
+  //
+  //     return {
+  //
+  //     }
+  //     // console.log('converted', converted)
+  //     // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
+  //   })
+  //   console.log('data..', data)
+  // })
 
 
   // and load the index.html of the app.

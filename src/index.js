@@ -1,4 +1,4 @@
-const createAirtableData = (playlistMetaData) => {
+const acreateAirtableData = (playlistMetaData) => {
     const data = playlistMetaData.map(songData => {
         const buffer = songData.value.image.imageBuffer
         const converted = buffer.toString('base64')
@@ -28,5 +28,5 @@ const createAirtableData = (playlistMetaData) => {
 }
 
 module.exports = {
-    createAirtableData
+    createAirtableData: () => console.log('llll1')
 }

@@ -5,6 +5,11 @@ import {
   external,
   pluginHotRestart,
 } from './vite.base.config.mjs';
+import commonjs from '@rollup/plugin-commonjs';
+
+// import { viteStaticCopy } from 'vite-plugin-static-copy'
+// import path from 'path';
+
 
 // https://vitejs.dev/config
 export default defineConfig((env) => {
@@ -23,7 +28,21 @@ export default defineConfig((env) => {
         external,
       },
     },
-    plugins: [pluginHotRestart('restart')],
+    plugins: [
+      commonjs(),
+
+      // viteStaticCopy({
+      //   targets: [
+      //     {
+      //       // src: 'helpers',
+      //       src: path.join(__dirname, 'src/helpers/index.js'),
+      //       dest: 'helpers'
+      //     }
+      //   ]
+      // }),
+        pluginHotRestart('restart'),
+
+    ],
     define,
     resolve: {
       // Load the Node.js entry.
