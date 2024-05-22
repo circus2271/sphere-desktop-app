@@ -14,18 +14,23 @@ const createAirtableData = (playlistMetaData) => {
         const buffer = songData.value.image.imageBuffer
         const convertedToBase64 = buffer.toString('base64')
         const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
+        const duration = `${Math.round(songData.value.length / 1000)}`
 
         return {
-            filename: 'blabla',
-            image: [
-                {
-                    url: dataURL,
-                    filename: 'blabla image filename',
-                    // type: 'image/jpeg'
-                    type: songData.value.image.mime
-                }
-            ],
-            duration: songData.value.duration
+            fields: {
+                // filename: 'blabla12',
+                filename: songData.value.filename,
+                // image: [
+                //     {
+                //         // url: dataURL,
+                //         // url: 'https://midnight-runner.vercel.app/images/arv.ean-photo1.jpeg',
+                //         // filename: 'blabla image filename',
+                //         // type: 'image/jpeg'
+                //         // type: songData.value.image.mime
+                //     }
+                // ],
+                duration
+            }
         }
         // console.log('converted', converted)
         // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
@@ -54,16 +59,17 @@ const uploadPlaylistDataToAirtable = async (dataToUpload) => {
     return response
 }
 
-const parseMetadataFromImages = async (filePaths) => {
-    const promises = filePaths.map(filepath => {
+const parseMetadataFromImages = async (fileData) => {
+    const promises = fileData.map(data => {
         return new Promise((resolve, reject) => {
-            NodeID3.read(filepath, function(error, tags) {
+            NodeID3.read(data.filepath, function(error, tags) {
                 if (error) {
                     console.error(err);
                     reject(error)
                 } else {
-                    console.log(tags)
-                    resolve(tags)
+                    // console.log(tags)
+
+                    resolve({...tags, filename: data.filename})
                 }
             })
         })
@@ -76,7 +82,8 @@ const parseMetadataFromImages = async (filePaths) => {
 module.exports = {
 
     createAirtableData,
-    parseMetadataFromImages
+    parseMetadataFromImages,
+    uploadPlaylistDataToAirtable
 }
 
 

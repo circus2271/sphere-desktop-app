@@ -71,8 +71,9 @@ container.addEventListener('drop', e => {
 
     console.log('sfd')
     const files = e.dataTransfer.files
-    const filenames =[]
-    const filePaths = []
+    // const filenames =[]
+    // const filePaths = []
+    const fileData = []
     // console.log(files[0])
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
@@ -83,21 +84,19 @@ container.addEventListener('drop', e => {
             continue
         }
         console.log(file.path)
-        window.filepath = file.path
-        filenames.push(file.name)
-        filePaths.push(file.path)
-        //        filenames.push(file.path)
+        const fileDataObject = {
+            filename: file.name,
+            filepath: file.path
+        }
+
+        fileData.push(fileDataObject)
+
+        // filenames.push(file.name)
+        // filePaths.push(file.path)
+
     }
 
-//    const fileNames = files.map(file => file.name)
-    //window.electronAPI.sendFileNames(filenames)
-//    window.electronAPI.sendFiles(files)
-//    window.electronAPI.sendFilePaths(filePaths)
-//    console.log(filePaths)
-// const encodedPaths = filePaths.map(path => encodeURI(path))
-// const encodedPaths = filePaths.map(path => encodeURIComponent(path))
-// window.electronAPI.sendFilePaths(encodedPaths)
-window.electronAPI.sendFilePaths(filePaths)
+window.electronAPI.sendFilePaths(fileData)
 // window.electronAPI.sendFilePaths(filePaths)
 
     container.classList.remove('active')

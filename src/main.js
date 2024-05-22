@@ -55,18 +55,21 @@ const createWindow = () => {
 
   })
 
-  ipcMain.on('file paths', async  (_event, filePaths) =>{
-    console.log('recieved filePaths: ')
+  ipcMain.on('file data', async (_event, fileData) => {
+    // console.log('recieved filePaths: ')
     let counter = 0;
     // console.log('typeof filepaths')
-    const metadata = await parseMetadataFromImages(filePaths)
-    console.log('data..', metadata)
+    // const filePaths = fileData.map(f => f.filePath)
+    // const metadata = await parseMetadataFromImages(filePaths)
+    const metadata = await parseMetadataFromImages(fileData)
+    // console.log('data..', metadata)
     mainWindow.webContents.send('metadata', metadata)
 
     const dataToUpload = createAirtableData(metadata);
 
     // upload this data to airtable as json
     const response = await uploadPlaylistDataToAirtable(dataToUpload)
+    console.log('resp', response)
   })
 
 
