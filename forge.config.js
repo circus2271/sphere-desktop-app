@@ -4,6 +4,9 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    platform: [
+        'darwin'
+    ]
   },
   rebuildConfig: {},
   makers: [
@@ -23,6 +26,20 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
+  ],
+  "publishers": [
+    // https://dev.to/erikhofer/build-and-publish-a-multi-platform-electron-app-on-github-3lnd
+
+    // https://github.com/marketplace/actions/electron-builder-action
+    {
+      "name": "@electron-forge/publisher-github",
+      "config": {
+        "repository": {
+          "owner": "circus2271",
+          "name": "sphere-desktop-app"
+        }
+      }
+    }
   ],
   plugins: [
     {
