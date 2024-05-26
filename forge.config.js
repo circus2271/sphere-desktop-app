@@ -26,6 +26,13 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
+    {
+      // macos
+      name: '@electron-forge/maker-pkg',
+      // config: {
+      //   keychain: 'my-secret-ci-keychain'
+      // }
+    }
   ],
   "publishers": [
     // https://dev.to/erikhofer/build-and-publish-a-multi-platform-electron-app-on-github-3lnd
