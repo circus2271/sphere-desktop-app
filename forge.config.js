@@ -44,7 +44,8 @@ module.exports = {
         "repository": {
           "owner": "circus2271",
           "name": "sphere-desktop-app"
-        }
+        },
+        "draft": true
       }
     }
   ],
