@@ -29,6 +29,21 @@ import './styles/index.scss';
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
+
+
+const sendButton = document.getElementById('send')
+sendButton.onclick = () => {
+    window.electronAPI.sendAPlaylist()
+    sendButton.disabled = true
+}
+
+window.electronAPI.playlistIsReadyToBeUploaded(() => {
+    // alert(178)
+    sendButton.disabled = false
+})
+
+
+
 const setButton = document.getElementById('btn')
 // const titleInput = document.getElementById('title')
 setButton.addEventListener('click', () => {
@@ -37,6 +52,14 @@ setButton.addEventListener('click', () => {
     // window.electronAPI.setTitle('fhsd22')
     window.electronAPI.requestTimeUpdate()
 })
+
+
+
+
+// window.electronAPI.startPlaylistUploading(() => {
+//     alert(17)
+//     setButton.disabled = true
+// })
 
 window.electronAPI.onTimeUpdate((value) => {
     console.log(value)

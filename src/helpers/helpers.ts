@@ -1,7 +1,8 @@
 // require('dotenv').config();
 import {Tags} from 'node-id3'
-
+// import {Track} from './typescript';
 import 'dotenv/config'
+import { Track } from './typescript';
 
 const {
     PERSONAL_ACCESS_TOKEN,
@@ -36,6 +37,43 @@ export const splitDataIntoChunks = (data: []) => {
     return chunks
 }
 
+// export const createAirtableData = (playlistMetaData) => {
+export const getTracksData = (playlistMetaData): Track[] => {
+// https://stackoverflow.com/a/41385149/9675926
+    const data = playlistMetaData.map((songData) => {
+        const buffer = songData.value.image.imageBuffer
+        const convertedToBase64 = buffer.toString('base64')
+        const dataURL = `data:application/octet-stream;base64,${convertedToBase64}`
+        const duration = `${Math.round(songData.value.length / 1000)}`
+
+        return {
+            // fields: {
+                // filename: 'blabla12',
+                filename: songData.value.filename,
+                image: [
+                    {
+                        url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAACWCAYAAABkW7XSAAAAAXNSR0IArs4c6QAABGJJREFUeF7t1AEJAAAMAsHZv/RyPNwSyDncOQIECEQEFskpJgECBM5geQICBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAAYPlBwgQyAgYrExVghIgYLD8AAECGQGDlalKUAIEDJYfIEAgI2CwMlUJSoCAwfIDBAhkBAxWpipBCRAwWH6AAIGMgMHKVCUoAQIGyw8QIJARMFiZqgQlQMBg+QECBDICBitTlaAECBgsP0CAQEbAYGWqEpQAgQdWMQCX4yW9owAAAABJRU5ErkJggg=='
+                        // url: dataURL,
+                        // url: 'https://midnight-runner.vercel.app/images/arv.ean-photo1.jpeg',
+                        // filename: 'blabla image filename',
+                        // type: 'image/jpeg'
+                        // type: songData.value.image.mime
+                    }
+                ],
+                duration
+            }
+        // }
+        // console.log('converted', converted)
+        // console.log('dataURL', `data:application/octet-stream;base64,${converted}`)
+    })
+
+    // const airtableData = {
+    //     records: data
+    // }
+    //
+    return data
+    // return airtableData
+}
 // export const createAirtableData = (playlistMetaData) => {
 // https://stackoverflow.com/a/41385149/9675926
 //     const data = playlistMetaData.map((songData: Tags & {filename: string}) => {

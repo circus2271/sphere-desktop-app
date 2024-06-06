@@ -1,6 +1,6 @@
 import NodeID3, {Tags} from "node-id3";
 
-type Cover = {
+export type Cover = {
     // blobCover: Blob,
     blobCover: string, // simplify it to string by now
     httpsCoverUrl?: string
@@ -8,13 +8,13 @@ type Cover = {
 // } | null
 
 
-type FileData = {
+export type FileData = {
     filename: string;
     filepath: string;
 }[]
 
 // type FIleDataArray = File
-interface Track {
+export interface Track {
     // filename:
     duration: number,
     filename: string,
@@ -26,6 +26,11 @@ interface Track {
 export class Playlist {
     private tracks: Track[] = []
 
+
+    addSingleTrack(tracks: Track) {
+        this.tracks.push(tracks)
+    }
+
     addTracks(tracks: Track[]) {
         this.tracks.push(...tracks)
     }
@@ -35,11 +40,8 @@ export class Playlist {
             return new Promise((resolve, reject) => {
                 NodeID3.read(data.filepath, function(error: any, tags: Tags) {
                     if (error) {
-                        // console.error('err');
                         reject(error)
                     } else {
-                        // console.log(tags)
-
                         // tags
                         console.log('originalFilename', tags.originalFilename)
                         resolve({...tags, filename: data.filename})

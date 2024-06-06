@@ -4,7 +4,7 @@ import path from 'path';
 import {getName} from './t';
 // import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/helpers';
 // import { createAirtableData,  uploadPlaylistDataToAirtable } from './helpers/helpers';
-import { uploadPlaylistDataToAirtable } from './helpers/helpers';
+import { getTracksData, uploadPlaylistDataToAirtable } from './helpers/helpers';
 import {Playlist} from './helpers/typescript';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -66,11 +66,22 @@ const createWindow = () => {
     // console.log('vitttte')
     // return
     const playlist = new Playlist()
-    const metadata = playlist.parseMetaData(fileData)
+    const metadata = await playlist.parseMetaData(fileData)
+    console.log('metadaaa', metadata)
+    const tracks = getTracksData(metadata)
+    // playlist.addTrack()
+    playlist.addTracks(tracks)
     // const metadata = playlistparseMetadataFromImages(fileData)
     // console.log('data..', metadata)
-    mainWindow.webContents.send('metadata', metadata)
 
+    ipcMain.on('sendAPlaylist', () => {
+      console.log('sending a playlist..')
+    })
+
+    mainWindow.webContents.send('metadata', metadata)
+    mainWindow.webContents.send('playlistIsReadyToBeUploaded')
+
+    return
     // const dataToUpload = createAirtableData(metadata);
 
     // upload this data to airtable as json

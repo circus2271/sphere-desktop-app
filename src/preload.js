@@ -14,5 +14,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendFilePaths: (data) => ipcRenderer.send('file data', data),
     onMetaDataRecieve: (callback) => ipcRenderer.on('metadata', (_event, dataArray) => callback(dataArray)),
     uploadPlaylist: (playlist) => ipcRenderer.send('upload-playlist', playlist),
+    sendAPlaylist: () => ipcRenderer.send('sendAPlaylist'),
+    startPlaylistUploading: () => ipcRenderer.send('uploadingAPlaylistStarted'),
+    playlistIsReadyToBeUploaded: (callback) => ipcRenderer.on('playlistIsReadyToBeUploaded', (_event) => callback()),
 })
 
