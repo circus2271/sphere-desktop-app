@@ -2,8 +2,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
 import {getName} from './t';
-import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/index.js';
-
+// import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/helpers';
+// import { createAirtableData,  uploadPlaylistDataToAirtable } from './helpers/helpers';
+import { uploadPlaylistDataToAirtable } from './helpers/helpers';
+import {Playlist} from './helpers/typescript';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -63,15 +65,17 @@ const createWindow = () => {
     // const metadata = await parseMetadataFromImages(filePaths)
     // console.log('vitttte')
     // return
-    const metadata = await parseMetadataFromImages(fileData)
+    const playlist = new Playlist()
+    const metadata = playlist.parseMetaData(fileData)
+    // const metadata = playlistparseMetadataFromImages(fileData)
     // console.log('data..', metadata)
     mainWindow.webContents.send('metadata', metadata)
 
-    const dataToUpload = createAirtableData(metadata);
+    // const dataToUpload = createAirtableData(metadata);
 
     // upload this data to airtable as json
-    const response = await uploadPlaylistDataToAirtable(dataToUpload)
-    console.log('resp', response)
+    // const response = await uploadPlaylistDataToAirtable(dataToUpload)
+    // console.log('resp', response)
   })
 
 
