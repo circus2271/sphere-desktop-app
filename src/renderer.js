@@ -92,6 +92,8 @@ container.addEventListener('drop', e => {
     // without this an image will be opened in a new tab
     e.preventDefault()
 
+    sendButton.disabled = true
+
     console.log('sfd')
     const files = e.dataTransfer.files
     // const filenames =[]

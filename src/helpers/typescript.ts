@@ -26,6 +26,9 @@ export interface Track {
 export class Playlist {
     private tracks: Track[] = []
 
+    get tracksAmount() {
+        return this.tracks.length
+    }
 
     addSingleTrack(tracks: Track) {
         this.tracks.push(tracks)

@@ -57,6 +57,8 @@ const createWindow = () => {
 
   })
 
+  const playlist = new Playlist()
+
   ipcMain.on('file data', async (_event, fileData) => {
     // console.log('recieved filePaths: ')
     let counter = 0;
@@ -65,12 +67,13 @@ const createWindow = () => {
     // const metadata = await parseMetadataFromImages(filePaths)
     // console.log('vitttte')
     // return
-    const playlist = new Playlist()
     const metadata = await playlist.parseMetaData(fileData)
     console.log('metadaaa', metadata)
     const tracks = getTracksData(metadata)
     // playlist.addTrack()
     playlist.addTracks(tracks)
+
+    console.log('amount of tracks in playlist:', playlist.tracksAmount)
     // const metadata = playlistparseMetadataFromImages(fileData)
     // console.log('data..', metadata)
 
