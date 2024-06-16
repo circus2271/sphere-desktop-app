@@ -1,0 +1,99 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+#  release:
+#    types:
+#      - created
+
+
+jobs:
+  release:
+    strategy:
+      matrix:
+#        os: [macos-latest, ubuntu-latest] #, windows-latest]
+#        os: [ubuntu-latest] #, windows-latest]
+        os: [windows-latest] #, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+#      - run-name: build for ${{ matrix.os }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@master
+        with:
+          node-version: 20
+      - name: install dependencies
+        run: npm install
+      - name: publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish
+#
+#    steps:
+#      - name: Check out Git repository
+#        uses: actions/checkout@v1
+#
+#      - name: Install Node.js, NPM and Yarn
+#        uses: actions/setup-node@v1
+#        with:
+#          node-version: 10
+#
+#      - name: Build/release Electron app
+#        uses: samuelmeuli/action-electron-builder@v1
+#        with:
+#          # GitHub token, automatically provided to the action
+#          # (No need to define this secret in the repo settings)
+#          github_token: ${{ secrets.github_token }}
+#
+#          # If the commit is tagged with a version (e.g. "v1.0.0"),
+#          # release the app after building
+#          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+#jobs:
+
+  #  publish_on_linux:
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - uses: actions/checkout@v2
+  #      - uses: actions/setup-node@master
+  #        with:
+  #          node-version: 20
+  #      - name: install dependencies
+  #        run: npm install
+  #      - name: publish
+  #        env:
+  #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #        run: npm run publish
+
+#  strategy:
+#    max-parallel: 4
+#    matrix:
+#      python-version: [ 'darwin', 'ubuntu-latest', 3.7, 3.8, 3.9 ]
+#
+#  publish_on_mac:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-node@master
+#        with:
+#          node-version: 20
+#      - name: install dependencies
+#        run: npm install
+#      - name: publish
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: npm run publish
+#
+#  publish_on_win:
+#    runs-on: windows-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-node@master
+#        with:
+#          node-version: 20
+#      - name: install dependencies
+#        run: npm install
+#      - name: publish
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: npm run publish

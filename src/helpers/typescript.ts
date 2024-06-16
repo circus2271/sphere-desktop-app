@@ -1,4 +1,16 @@
 import NodeID3, {Tags} from "node-id3";
+import {S3} from './helpers'
+
+
+import {
+    PutObjectCommand,
+    CreateBucketCommand,
+    DeleteObjectCommand,
+    DeleteBucketCommand,
+    paginateListObjectsV2,
+    GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import fs from "fs";
 
 export type Cover = {
     // blobCover: Blob,
@@ -19,6 +31,7 @@ export interface Track {
     duration: number,
     filename: string,
     cover?: Cover,
+    filepath: string
     // getTrackHttpsUrl(): any, // probably use Uploader class
 
 }
@@ -38,6 +51,10 @@ export class Playlist {
         this.tracks.push(...tracks)
     }
 
+    getTracks() {
+        return this.tracks
+    }
+
     async parseMetaData(fileData: FileData) {
         const promises = fileData.map(data => {
             return new Promise((resolve, reject) => {
@@ -47,7 +64,7 @@ export class Playlist {
                     } else {
                         // tags
                         console.log('originalFilename', tags.originalFilename)
-                        resolve({...tags, filename: data.filename})
+                        resolve({...tags, filename: data.filename, filepath: data.filepath})
                     }
                 })
             })
@@ -73,7 +90,36 @@ const BASE_ID = 'fake id'
 const TABLE_ID = 'fake id'
 const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`
 
-class Uploader {
+export class Uploader {
+
+    static async uploadTracksToCloudflareR2(tracks: Track[]) {
+        // https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/getting-started-nodejs.html
+
+        for await (const track of tracks) {
+            try {
+                console.log('trying to send a file')
+                await S3.send(
+                    new PutObjectCommand({
+                        Bucket: 'sphere-bucket',
+                        // Key: "my-first-object.txt",
+                        // Body: "Hello JavaScript SDK!",
+                        Key: track.filename,
+                        // Body: "Hello JavaScript SDK!",
+                        // chat gpt help
+                        Body: fs.createReadStream(track.filepath),
+                        ContentType: 'audio/mpeg'
+                    })
+                )
+
+                console.log('file sended')
+            } catch(err) {
+                console.log('error.. could not send a file')
+            }
+
+        }
+
+    }
+
     static async uploadTracksToDigitalOcean(tracks: Track[]) {
 
         const response = await fetch(airtableUrl, {
@@ -130,25 +176,29 @@ const tracks: Track[] = [
     {
         duration: 227,
         filename: 'track1.mp3',
+        filepath: 'fake-path/track1.mp3'
     },
     {
         duration: 221,
         filename: 'track2.mp3',
         cover: {
             blobCover: 'fdsfsdf'
-        }
+        },
+        filepath: 'fake-path/track2.mp3'
     },
     {
         duration: 225,
         filename: 'track3.mp3',
-        cover: undefined
+        cover: undefined,
+        filepath: 'fake-path/track3.mp3'
     },
     {
         duration: 231,
         filename: 'track4.mp3',
         cover: {
             blobCover: 'fdfsdf fake blob data'
-        }
+        },
+        filepath: 'fake-path/track4.mp3'
     },
 ]
 

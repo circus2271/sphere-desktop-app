@@ -5,7 +5,7 @@ import {getName} from './t';
 // import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/helpers';
 // import { createAirtableData,  uploadPlaylistDataToAirtable } from './helpers/helpers';
 import { getTracksData, uploadPlaylistDataToAirtable } from './helpers/helpers';
-import {Playlist} from './helpers/typescript';
+import {Playlist, Uploader} from './helpers/typescript';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -79,6 +79,9 @@ const createWindow = () => {
 
     ipcMain.on('sendAPlaylist', () => {
       console.log('sending a playlist..')
+
+      const tracks = playlist.getTracks()
+      Uploader.uploadTracksToCloudflareR2(tracks)
     })
 
     mainWindow.webContents.send('metadata', metadata)

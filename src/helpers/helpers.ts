@@ -4,11 +4,32 @@ import {Tags} from 'node-id3'
 import 'dotenv/config'
 import { Track } from './typescript';
 
+import {
+    S3Client, S3ClientConfig,
+    // ListBucketsCommand,
+    // ListObjectsV2Command,
+    // GetObjectCommand,
+    // PutObjectCommand
+} from "@aws-sdk/client-s3";
+
+
 const {
     PERSONAL_ACCESS_TOKEN,
     BASE_ID,
-    FIRST_TABLE_ID
+    FIRST_TABLE_ID,
+    ACCESS_KEY_ID,
+    SECRET_ACCESS_KEY,
+    ACCOUNT_ID
 } = process.env
+
+export const S3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+        accessKeyId: ACCESS_KEY_ID,
+        secretAccessKey: SECRET_ACCESS_KEY,
+    },
+} as S3ClientConfig);
 
 export const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${FIRST_TABLE_ID}`
 
@@ -49,6 +70,7 @@ export const getTracksData = (playlistMetaData): Track[] => {
         return {
             // fields: {
                 // filename: 'blabla12',
+                filepath: songData.value.filepath,
                 filename: songData.value.filename,
                 image: [
                     {

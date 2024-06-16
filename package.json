@@ -40,6 +40,7 @@
   "author": "user",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.598.0",
     "dotenv": "^16.4.5",
     "electron-squirrel-startup": "^1.0.1",
     "node-id3": "^0.2.6"
