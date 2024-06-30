@@ -10,7 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --watch",
     "dev1": "npm run typecheck && npm run start",
     "dev": "tsc --noEmit --watch"
   },
@@ -41,8 +41,10 @@
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.598.0",
+    "axios": "^1.7.2",
     "dotenv": "^16.4.5",
     "electron-squirrel-startup": "^1.0.1",
+    "node-fetch": "^3.3.2",
     "node-id3": "^0.2.6"
   }
 }

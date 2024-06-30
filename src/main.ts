@@ -4,8 +4,9 @@ import path from 'path';
 import {getName} from './t';
 // import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/helpers';
 // import { createAirtableData,  uploadPlaylistDataToAirtable } from './helpers/helpers';
-import { getTracksData, uploadPlaylistDataToAirtable } from './helpers/helpers';
-import {Playlist, Uploader} from './helpers/typescript';
+import {getTracksData, splitDataIntoChunks} from './helpers/helpers';
+import {Uploader} from "./helpers/Uploader";
+import {Playlist} from "./helpers/Playlist";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -22,79 +23,86 @@ const createWindow = () => {
     },
   });
 
-  ipcMain.on('request-time-update', (_event, value) => {
-    console.log(value) // will print value to Node console
-    // setTimeout(() => {
-    //   mainWindow.webContents.send('update-counter', 1),
-    // }, 1000)
-    let counter = 0
-    let interval = setInterval(() => {
-      console.log(new Date().getSeconds())
-      mainWindow.webContents.send('time-update', new Date().getSeconds())
-
-      counter++
-      if (counter == 12) clearInterval(interval)
-      if (counter == 12) mainWindow.webContents.send('time-update', 'ёлл')
-    }, 1000)
-  })
-
-  ipcMain.on('filenames', (_event, filenames) =>{
-    console.log('recieved filenames: ')
-    for (let i = 0; i < filenames.length; i++) {
-      const filename =  filenames[i]
-      console.log(filename)
-    }
-  })
-
-  ipcMain.on('upload-playlist', (_event, playlistMetaData) =>{
-    console.log('upload-playlist: playlist recieved')
-
-    // const airtableData = createAirtableData(playlistMetaData)
-    // send this data to airtable to create records
-
-    // console.log('playlist length:', playlistMetaData.length)
-    // console.log('records11', records)
-
-  })
 
   const playlist = new Playlist()
 
-  ipcMain.on('file data', async (_event, fileData) => {
-    // console.log('recieved filePaths: ')
-    let counter = 0;
-    // console.log('typeof filepaths')
-    // const filePaths = fileData.map(f => f.filePath)
-    // const metadata = await parseMetadataFromImages(filePaths)
-    // console.log('vitttte')
-    // return
+  ipcMain.on('sendAPlaylist', async () => {
+    // console.log('sending a playlist..')
+    //
+    // const tracks = playlist.getTracks()
+    // // split those tracks into chunks (to bypass AT request limit)
+    // // split by 10, because AT may get only 10 records per once
+    // const chunks = splitDataIntoChunks(tracks, 2)
+    // for await (const chunk of chunks) {
+    //   console.log('chunk', chunk.cover)
+    //   await Uploader.uploadTracksToCloudflareR2(chunk)
+    // }
+  })
+
+  ipcMain.on('dragAndDrop', async (_event, fileData) => {
     const metadata = await playlist.parseMetaData(fileData)
     console.log('metadaaa', metadata)
-    const tracks = getTracksData(metadata)
-    // playlist.addTrack()
+    // const tracks = getTracksData(metadata)
+    let tracks = getTracksData(metadata)
     playlist.addTracks(tracks)
 
     console.log('amount of tracks in playlist:', playlist.tracksAmount)
-    // const metadata = playlistparseMetadataFromImages(fileData)
-    // console.log('data..', metadata)
-
-    ipcMain.on('sendAPlaylist', () => {
-      console.log('sending a playlist..')
-
-      const tracks = playlist.getTracks()
-      Uploader.uploadTracksToCloudflareR2(tracks)
-    })
 
     mainWindow.webContents.send('metadata', metadata)
     mainWindow.webContents.send('playlistIsReadyToBeUploaded')
 
-    return
-    // const dataToUpload = createAirtableData(metadata);
+    console.log('sending a playlist..')
 
-    // upload this data to airtable as json
-    // const response = await uploadPlaylistDataToAirtable(dataToUpload)
-    // console.log('resp', response)
+    // const tracks = playlist.getTracks()
+    tracks = playlist.getTracks()
+    // split those tracks into chunks (to bypass AT request limit)
+    // split by 10, because AT may get only 10 records per once
+    const chunks = splitDataIntoChunks(tracks, 2)
+    for await (const chunk of chunks) {
+      // console.log('chunk', chunk.cover)
+      // await Uploader.uploadTracksToCloudflareR2(chunk)
+      const uploadedTracks = []
+      for await (const track of chunk) {
+        // try to upload the track
+        // try to upload the cover
+        const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+        if (uploadedTrackUrl) {
+          track.uploadedTrackUrl = uploadedTrackUrl
+          const cover = track.cover
+          if (cover) {
+            const trackname = track.trackname
+            const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
+
+            cover.httpsCoverUrl = uploadedCoverUrl
+            track.cover = cover // sorry..
+          }
+
+          uploadedTracks.push(track)
+        }
+
+        try {
+          await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+        } catch (error) {
+          console.log(error)
+        }
+        // console.log('pr:', track)
+      }
+    }
+
   })
 
+
+
+  // ipcMain.on('upload-playlist', (_event, playlistMetaData) =>{
+  //   console.log('upload-playlist: playlist recieved')
+  //
+  //   // const airtableData = createAirtableData(playlistMetaData)
+  //   // send this data to airtable to create records
+  //
+  //   // console.log('playlist length:', playlistMetaData.length)
+  //   // console.log('records11', records)
+  //
+  // })
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

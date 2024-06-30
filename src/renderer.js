@@ -1,30 +1,4 @@
-/**
- * This file will automatically be loaded by vite and run in the "renderer" context.
- * To learn more about the differences between the "main" and the "renderer" context in
- * Electron, visit:
- *
- * https://electronjs.org/docs/tutorial/application-architecture#main-and-renderer-processes
- *
- * By default, Node.js integration in this file is disabled. When enabling Node.js integration
- * in a renderer process, please be aware of potential security implications. You can read
- * more about security risks here:
- *
- * https://electronjs.org/docs/tutorial/security
- *
- * To enable Node.js integration in this file, open up `main.js` and enable the `nodeIntegration`
- * flag:
- *
- * ```
- *  // Create the browser window.
- *  mainWindow = new BrowserWindow({
- *    width: 800,
- *    height: 600,
- *    webPreferences: {
- *      nodeIntegration: true
- *    }
- *  });
- * ```
- */
+
 import './styles/index.scss';
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
@@ -44,13 +18,38 @@ window.electronAPI.playlistIsReadyToBeUploaded(() => {
 
 
 
-const setButton = document.getElementById('btn')
-// const titleInput = document.getElementById('title')
-setButton.addEventListener('click', () => {
-    // const title = titleInput.value
-    console.log('time update requested')
-    // window.electronAPI.setTitle('fhsd22')
-    window.electronAPI.requestTimeUpdate()
+window.electronAPI.onMetaDataRecieve((data) => {
+    console.log('metadata', data)
+    // const images = data.map(dataItem => {
+    data.forEach(dataItem => {
+        // const hasCover = !!dataItem.value.image
+        // if dataItem.value.image exists
+        const hasCover = dataItem.value.hasOwnProperty('image')
+        if (!hasCover) {
+            // alert('no cover')
+            const placeholder = document.createElement('div')
+
+            placeholder.classList.add('placeholder')
+            // placeholder.style.height = '200px'
+            // placeholder.style.width = '200px'
+            // placeholder.classList.add('without-cover')
+            document.body.prepend(placeholder)
+
+            return
+        }
+
+        const buffer = dataItem.value.image.imageBuffer;
+        const blob = new Blob([buffer]);
+        const objectURL = URL.createObjectURL(blob)
+
+        const image = new Image();
+        image.style.height = '200px'
+        image.style.width = '200px'
+        image.onload = () => image.classList.add('loaded')
+        image.src = objectURL
+        0
+        document.body.prepend(image)
+    })
 })
 
 
@@ -61,9 +60,10 @@ setButton.addEventListener('click', () => {
 //     setButton.disabled = true
 // })
 
-window.electronAPI.onTimeUpdate((value) => {
-    console.log(value)
-})
+
+
+
+
 
 // drag and drop
 
@@ -122,54 +122,10 @@ container.addEventListener('drop', e => {
     }
 
     window.electronAPI.sendFilePaths(fileData)
-// window.electronAPI.sendFilePaths(filePaths)
 
     container.classList.remove('active')
 })
 
-// container.addEventListener('dragover', (e) => {
-//   e.preventDefault()
-//   e.stopPropagation();
-//   e.preventDefault();
-//   container.classList.add('active')
-//  // console.log('dragover') container.classList.remove('active')
-// })
-
-
-
-window.electronAPI.onMetaDataRecieve((data) => {
-    console.log('metadata', data)
-    // const images = data.map(dataItem => {
-    data.forEach(dataItem => {
-        // const hasCover = !!dataItem.value.image
-        // if dataItem.value.image exists
-        const hasCover = dataItem.value.hasOwnProperty('image')
-        if (!hasCover) {
-            // alert('no cover')
-            const placeholder = document.createElement('div')
-
-            placeholder.classList.add('placeholder')
-            // placeholder.style.height = '200px'
-            // placeholder.style.width = '200px'
-            // placeholder.classList.add('without-cover')
-            document.body.prepend(placeholder)
-
-            return
-        }
-
-        const buffer = dataItem.value.image.imageBuffer;
-        const blob = new Blob([buffer]);
-        const objectURL = URL.createObjectURL(blob)
-
-        const image = new Image();
-        image.style.height = '200px'
-        image.style.width = '200px'
-        image.onload = () => image.classList.add('loaded')
-        image.src = objectURL
-        0
-        document.body.prepend(image)
-    })
-})
 
 // alert(32443)
 
