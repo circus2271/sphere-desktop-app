@@ -4,14 +4,24 @@ import {Uploader} from "./Uploader.js";
 
 export class Playlist {
     private tracks: Track[] = []
+    private uploadedTracks: Track[] = []
+    // private uploadQueque: Track[] = []
+
+    addUploadedTracks(tracks: Track[]) {
+        this.uploadedTracks.push(...tracks)
+    }
+
+    getUploadedTracks(): Track[] {
+        return this.uploadedTracks
+    }
 
     get tracksAmount() {
         return this.tracks.length
     }
 
-    addSingleTrack(tracks: Track) {
-        this.tracks.push(tracks)
-    }
+    // addSingleTrack(tracks: Track) {
+    //     this.tracks.push(tracks)
+    // }
 
     addTracks(tracks: Track[]) {
         this.tracks.push(...tracks)

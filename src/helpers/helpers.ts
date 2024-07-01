@@ -76,7 +76,11 @@ export const splitDataIntoChunks = (data: Track[], chunkSize = 10) => {
 export const getTracksData = (playlistMetaData): Track[] => {
 // https://stackoverflow.com/a/41385149/9675926
     const data = playlistMetaData.map((songData) => {
+        // console.log('songdata', songData.value)
         const duration = `${Math.round(songData.value.length / 1000)}`
+        // console.log('duration', duration)
+        // console.log('length', songData.value.length)
+
 
         return {
                 filepath: songData.value.filepath,

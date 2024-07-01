@@ -53,8 +53,18 @@ const createWindow = () => {
 
     console.log('sending a playlist..')
 
-    // const tracks = playlist.getTracks()
-    tracks = playlist.getTracks()
+    const alreadyUploadedTracks = playlist.getUploadedTracks()
+    // const tracks = playlist.getTracks().filter(track => {
+    tracks = playlist.getTracks().filter(track => {
+      // if track is already uploaded remove it from tracks array
+      const alreadyUploaded = alreadyUploadedTracks.find(uploadedTrack => {
+        return uploadedTrack.filename === track.filename
+      })
+
+      return !alreadyUploaded
+    })
+    // tracks = playlist.getTracks().filter()
+
     // split those tracks into chunks (to bypass AT request limit)
     // split by 10, because AT may get only 10 records per once
     const chunks = splitDataIntoChunks(tracks, 2)
@@ -79,14 +89,17 @@ const createWindow = () => {
 
           uploadedTracks.push(track)
         }
-
-        try {
-          await Uploader.uploadPlaylistToAirtable(uploadedTracks)
-        } catch (error) {
-          console.log(error)
-        }
-        // console.log('pr:', track)
       }
+
+
+      playlist.addUploadedTracks(uploadedTracks)
+      // console.log('upt', playlist.getUploadedTracks()
+      try {
+        await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+      } catch (error) {
+        console.log(error)
+      }
+      // console.log('pr:', track)
     }
 
   })
