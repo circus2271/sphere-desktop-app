@@ -10,5 +10,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     sendAPlaylist: () => ipcRenderer.send('sendAPlaylist'),
     startPlaylistUploading: () => ipcRenderer.send('uploadingAPlaylistStarted'),
     playlistIsReadyToBeUploaded: (callback) => ipcRenderer.on('playlistIsReadyToBeUploaded', (_event) => callback()),
+
+    // working with client notification (when something happens on a server side)
+    tracksAddedToAPlaylist: (callback) => {ipcRenderer.on('notifyClient:tracksAdded', (_event) => callback())},
+    trackWasUploaded: (callback) => {ipcRenderer.on('notifyClient:trackUploaded', (_event, track, tracksAmount) => callback(track, tracksAmount))},
+    playlistDeleted: (callback) => {ipcRenderer.on('notifyClient:localPlaylistWasDeleted', (_event) => callback())},
+
+    deleteAPlaylist: () => ipcRenderer.send('deleteAPlaylist'),
+
 })
 

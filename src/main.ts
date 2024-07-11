@@ -7,6 +7,7 @@ import {getName} from './t';
 import {getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
+import {Track} from "./helpers/types";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -39,12 +40,42 @@ const createWindow = () => {
     // }
   })
 
+  type notificationType = 'tracksAdded' | 'playlistDeleted' | 'trackUploaded'
+  // const notification = {
+  //
+  // }
+
+
+  const notifyClient = (notificationType: notificationType, data?: Track | Track[]) => {
+    if (notificationType === 'tracksAdded') {
+      // mainWindow.webContents.send('notifyClient:tracksAdded', {allTracks: playlist.getTracks()})
+      mainWindow.webContents.send('notifyClient:tracksAdded', {addedTracks: data})
+    }
+
+    if (notificationType === 'trackUploaded') {
+      if (Array.isArray(data)) {
+      // if (data instanceof Array) {
+        console.error('notifyClient: wrong data parameter provided. it should be track object instead of array of tracks')
+      }
+
+      mainWindow.webContents.send('notifyClient:trackUploaded', {
+        uploadedTrack: data,
+        newlyUploadedTracksCount: (data as Track[]).length,
+        allUploadedTrackCount: playlist.uploadedTracksAmount})
+    }
+    if (notificationType === 'playlistDeleted') {
+      mainWindow.webContents.send('notifyClient:localPlaylistWasDeleted')
+    }
+  }
+
+  // mainWindow.webContents.send('notify-client', notifyClient('tra'))
   ipcMain.on('dragAndDrop', async (_event, fileData) => {
     const metadata = await playlist.parseMetaData(fileData)
     console.log('metadaaa', metadata)
     // const tracks = getTracksData(metadata)
     let tracks = getTracksData(metadata)
     playlist.addTracks(tracks)
+    notifyClient('tracksAdded', tracks)
 
     console.log('amount of tracks in playlist:', playlist.tracksAmount)
 
@@ -88,7 +119,7 @@ const createWindow = () => {
           }
 
           uploadedTracks.push(track)
-        }
+          notifyClient('trackUploaded', track)        }
       }
 
 

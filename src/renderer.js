@@ -1,5 +1,6 @@
 
 import './styles/index.scss';
+import {ipcRenderer} from "electron";
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
@@ -51,6 +52,102 @@ window.electronAPI.onMetaDataRecieve((data) => {
         document.body.prepend(image)
     })
 })
+
+
+
+const console = document.querySelector('#js-console')
+// const tracksCounter = document.querySelector('#js-added-tracks-counter')
+const tracksCounter = document.querySelector('#track-count-summary')
+
+const addToHTMLConsole = (html) => {
+    console.innerHTML += html
+}
+
+// const increaseTracksCounter = (newTracksAmount) => {
+//     const currentCount = +tracksCounter.innerHTML // get html string and convert it to a number
+//     const newCount = currentCount + newTracksAmount
+//
+//     tracksCounter.innerHTML = newCount
+// }
+const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPlaylist}) => {
+    if (action === 'add') {
+        const currentCount = +tracksCounter.dataset['current-count'] // get current count and convert it to number
+        const updatedCount = currentCount + numberOfNewTracks
+
+        tracksCounter.innerHTML = updatedCount === 1 ?
+            'there is 1 track in a playlist' :
+            'there are ${updatedCount} tracks in a playlist`
+
+        tracksCounter.dataset['current-count'] = updatedCount
+    }
+
+    if (action === 'reset') {
+        tracksCounter.innerHTML = 'there are no tracks in a playlist'
+        tracksCounter.dataset['current-count'] = '0'
+    }
+}
+
+window.electronAPI.tracksAddedToAPlaylist((tracks) => {
+    const onlyOneTrack = tracks.length === 1
+
+    const html = `
+      <li class="console-item">
+        ${onlyOneTrack ? 
+          '1 track is added' : 
+          `${tracks.length} tracks are added`
+        }
+        
+        to the playlist
+      </li>
+    `
+
+    increaseTracksCounter(tracks.length)
+    addToHTMLConsole(html)
+})
+
+const deletePlaylistButton = document.querySelector('#js-delete-local-playlist')
+deletePlaylistButton.onclick = () => {
+    window.electronApi.deleteAPlaylist()
+
+}
+
+
+window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount)} => {
+    const trackCover = uploadedTrack.uploadedTrackUrl
+    const trackname = uploadedTrack.trackname
+
+    const html = `
+      <li class="console-item">
+        started uploading of a 1st track
+        track info:
+        trackname: ${trackname}
+        track cover: <img src="${trackCover}" alt="${trackname}'s cover">
+      </li>
+    `
+
+    // enable this button, sinse there are now tracks to delete
+    deletePlaylistButton.disabled = false
+
+    addToHTMLConsole(html)
+})
+
+
+window.electronAPI.playlistDeleted(() => {
+    // local playlist is already deletede on a local server,
+    // so clean up the view on a client side
+    tracksCounter.innerHTML = '0'
+
+    // disable "delete a playlist" button, sinse there is no playlist and hense nothing to delete
+    deletePlaylistButton.disabled = true
+
+    addToHTMLConsole('<li class="console-item">local playlist was deleted</li>')
+})
+
+
+
+
+
+
 
 
 

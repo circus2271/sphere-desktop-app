@@ -15,6 +15,10 @@ export class Playlist {
         return this.uploadedTracks
     }
 
+    get uploadedTracksAmount() {
+        return this.uploadedTracks.length
+    }
+
     get tracksAmount() {
         return this.tracks.length
     }
