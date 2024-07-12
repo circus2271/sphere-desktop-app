@@ -1,6 +1,6 @@
 
 import './styles/index.scss';
-import {ipcRenderer} from "electron";
+// import {ipcRenderer} from "electron";
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
@@ -18,49 +18,50 @@ window.electronAPI.playlistIsReadyToBeUploaded(() => {
 })
 
 
+//
+// window.electronAPI.onMetaDataRecieve((data) => {
+//     console.log('metadata', data)
+//     // const images = data.map(dataItem => {
+//     data.forEach(dataItem => {
+//         // const hasCover = !!dataItem.value.image
+//         // if dataItem.value.image exists
+//         const hasCover = dataItem.value.hasOwnProperty('image')
+//         if (!hasCover) {
+//             // alert('no cover')
+//             const placeholder = document.createElement('div')
+//
+//             placeholder.classList.add('placeholder')
+//             // placeholder.style.height = '200px'
+//             // placeholder.style.width = '200px'
+//             // placeholder.classList.add('without-cover')
+//             document.body.prepend(placeholder)
+//
+//             return
+//         }
+//
+//         const buffer = dataItem.value.image.imageBuffer;
+//         const blob = new Blob([buffer]);
+//         const objectURL = URL.createObjectURL(blob)
+//
+//         const image = new Image();
+//         image.style.height = '200px'
+//         image.style.width = '200px'
+//         image.onload = () => image.classList.add('loaded')
+//         image.src = objectURL
+//         // 0
+//         document.body.prepend(image)
+//     })
+// })
+//
 
-window.electronAPI.onMetaDataRecieve((data) => {
-    console.log('metadata', data)
-    // const images = data.map(dataItem => {
-    data.forEach(dataItem => {
-        // const hasCover = !!dataItem.value.image
-        // if dataItem.value.image exists
-        const hasCover = dataItem.value.hasOwnProperty('image')
-        if (!hasCover) {
-            // alert('no cover')
-            const placeholder = document.createElement('div')
 
-            placeholder.classList.add('placeholder')
-            // placeholder.style.height = '200px'
-            // placeholder.style.width = '200px'
-            // placeholder.classList.add('without-cover')
-            document.body.prepend(placeholder)
-
-            return
-        }
-
-        const buffer = dataItem.value.image.imageBuffer;
-        const blob = new Blob([buffer]);
-        const objectURL = URL.createObjectURL(blob)
-
-        const image = new Image();
-        image.style.height = '200px'
-        image.style.width = '200px'
-        image.onload = () => image.classList.add('loaded')
-        image.src = objectURL
-        0
-        document.body.prepend(image)
-    })
-})
-
-
-
-const console = document.querySelector('#js-console')
+const htmlConsole = document.querySelector('#js-console')
 // const tracksCounter = document.querySelector('#js-added-tracks-counter')
-const tracksCounter = document.querySelector('#track-count-summary')
+// const tracksCounter = document.querySelector('#track-count-summary')
+const tracksCounter = document.querySelector('#js-track-count-summary')
 
 const addToHTMLConsole = (html) => {
-    console.innerHTML += html
+    htmlConsole.innerHTML += html
 }
 
 // const increaseTracksCounter = (newTracksAmount) => {
@@ -71,59 +72,65 @@ const addToHTMLConsole = (html) => {
 // }
 const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPlaylist}) => {
     if (action === 'add') {
-        const currentCount = +tracksCounter.dataset['current-count'] // get current count and convert it to number
+        const currentCount = +tracksCounter.getAttribute('data-current-count') // get current count and convert it to number
         const updatedCount = currentCount + numberOfNewTracks
 
         tracksCounter.innerHTML = updatedCount === 1 ?
             'there is 1 track in a playlist' :
-            'there are ${updatedCount} tracks in a playlist`
+            `there are ${updatedCount} tracks in a playlist`;
 
-        tracksCounter.dataset['current-count'] = updatedCount
+        tracksCounter.setAttribute('data-current-count', updatedCount)
     }
 
     if (action === 'reset') {
         tracksCounter.innerHTML = 'there are no tracks in a playlist'
-        tracksCounter.dataset['current-count'] = '0'
+        tracksCounter.setAttribute('data-current-count', '0')
     }
 }
 
-window.electronAPI.tracksAddedToAPlaylist((tracks) => {
+window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => { // get value addedTracks from recieved object, and use it as its a variable called "tracks"
     const onlyOneTrack = tracks.length === 1
 
     const html = `
       <li class="console-item">
-        ${onlyOneTrack ? 
-          '1 track is added' : 
-          `${tracks.length} tracks are added`
+        ${onlyOneTrack ? '1 track is added' : 
+          // `${tracks.length} tracks are added`
+          tracks.length + 'tracks are added'
         }
         
         to the playlist
       </li>
     `
 
-    increaseTracksCounter(tracks.length)
+    updateTracksCounter({action: 'add', numberOfNewTracks: tracks.length})
     addToHTMLConsole(html)
 })
 
 const deletePlaylistButton = document.querySelector('#js-delete-local-playlist')
 deletePlaylistButton.onclick = () => {
-    window.electronApi.deleteAPlaylist()
-
+    window.electronAPI.deleteAPlaylist()
 }
 
 
-window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount)} => {
-    const trackCover = uploadedTrack.uploadedTrackUrl
-    const trackname = uploadedTrack.trackname
+window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount}) => {
+    const trackCover = uploadedTrack.cover?.httpsCoverUrl
+    // const trackname = uploadedTrack.trackname
+    const filename = uploadedTrack.filename
+
+    const coverHTML = trackCover ?
+        `track cover: <img class="cover" src="${trackCover}" alt="${filename} cover">` :
+        'track has no cover'
 
     const html = `
       <li class="console-item">
         started uploading of a 1st track
         track info:
-        trackname: ${trackname}
-        track cover: <img src="${trackCover}" alt="${trackname}'s cover">
+        filename: ${filename}
+        ${coverHTML}
       </li>
     `
+    // trackname: ${trackname}
+    // track cover: <img src="${trackCover}" alt="${trackname}'s cover">
 
     // enable this button, sinse there are now tracks to delete
     deletePlaylistButton.disabled = false
@@ -141,6 +148,8 @@ window.electronAPI.playlistDeleted(() => {
     deletePlaylistButton.disabled = true
 
     addToHTMLConsole('<li class="console-item">local playlist was deleted</li>')
+
+    updateTracksCounter({action: 'reset'})
 })
 
 

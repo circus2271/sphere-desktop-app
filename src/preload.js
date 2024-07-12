@@ -2,6 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 const { contextBridge, ipcRenderer } = require('electron')
+// const {Track} = require("./helpers/types");
 
 contextBridge.exposeInMainWorld('electronAPI', {
     sendFilePaths: (data) => ipcRenderer.send('dragAndDrop', data),
@@ -12,11 +13,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     playlistIsReadyToBeUploaded: (callback) => ipcRenderer.on('playlistIsReadyToBeUploaded', (_event) => callback()),
 
     // working with client notification (when something happens on a server side)
-    tracksAddedToAPlaylist: (callback) => {ipcRenderer.on('notifyClient:tracksAdded', (_event) => callback())},
-    trackWasUploaded: (callback) => {ipcRenderer.on('notifyClient:trackUploaded', (_event, track, tracksAmount) => callback(track, tracksAmount))},
+    tracksAddedToAPlaylist: (callback) => {ipcRenderer.on('notifyClient:tracksAdded', (_event, obj) => callback(obj))},
+    trackWasUploaded: (callback) => {ipcRenderer.on('notifyClient:trackUploaded', (_event, obj) => callback(obj))},
     playlistDeleted: (callback) => {ipcRenderer.on('notifyClient:localPlaylistWasDeleted', (_event) => callback())},
 
     deleteAPlaylist: () => ipcRenderer.send('deleteAPlaylist'),
+
+
 
 })
 

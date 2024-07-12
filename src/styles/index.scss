@@ -8,6 +8,7 @@ body {
   margin: auto;
   max-width: 38rem;
   padding: 2rem;
+  color: #fff;
 }
 
 button {
@@ -28,6 +29,8 @@ button {
   width: var(--size);
   height: var(--size);
   background: #eee;
+  color: #333;
+  //color: #000;
   border-radius: 3.5px;
   display: flex;
   flex-direction: column;
@@ -77,5 +80,15 @@ button {
     height: auto;
     background-color: #eee;
     display: block;
+  }
+}
+
+
+.console-item {
+  //color: #fff;
+
+  img.cover {
+    width: 100px;
+    padding-top: .5rem;
   }
 }

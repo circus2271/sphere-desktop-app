@@ -40,7 +40,15 @@ const createWindow = () => {
     // }
   })
 
-  type notificationType = 'tracksAdded' | 'playlistDeleted' | 'trackUploaded'
+  ipcMain.on('deleteAPlaylist', () => {
+    playlist.deleteLocalPlaylist()
+    playlist.deleteUploadedTracksInfo()
+
+    console.log('local playlist deleted')
+    notifyClient('localPlaylistDeleted')
+  })
+
+  type notificationType = 'tracksAdded' | 'localPlaylistDeleted' | 'trackUploaded'
   // const notification = {
   //
   // }
@@ -63,7 +71,7 @@ const createWindow = () => {
         newlyUploadedTracksCount: (data as Track[]).length,
         allUploadedTrackCount: playlist.uploadedTracksAmount})
     }
-    if (notificationType === 'playlistDeleted') {
+    if (notificationType === 'localPlaylistDeleted') {
       mainWindow.webContents.send('notifyClient:localPlaylistWasDeleted')
     }
   }

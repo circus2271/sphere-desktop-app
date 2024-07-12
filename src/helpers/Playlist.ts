@@ -53,6 +53,14 @@ export class Playlist {
         const metadata = await Promise.allSettled(promises)
         return metadata
     }
+
+    deleteLocalPlaylist() {
+        this.tracks = []
+    }
+
+    deleteUploadedTracksInfo() {
+        this.uploadedTracks = []
+    }
     //
     // async getTracksHttpsUrls() {
     //     this.tracks = await Uploader.uploadCoversToDigitalOcean(this.tracks)
