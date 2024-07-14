@@ -7,8 +7,12 @@ export class Playlist {
     private uploadedTracks: Track[] = []
     // private uploadQueque: Track[] = []
 
-    addUploadedTracks(tracks: Track[]) {
+    addMultipleUploadedTracks(tracks: Track[]) {
         this.uploadedTracks.push(...tracks)
+    }
+
+    addSingleUploadedTrack(track: Track) {
+        this.uploadedTracks.push(track)
     }
 
     getUploadedTracks(): Track[] {

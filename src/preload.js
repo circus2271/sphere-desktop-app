@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // working with client notification (when something happens on a server side)
     tracksAddedToAPlaylist: (callback) => {ipcRenderer.on('notifyClient:tracksAdded', (_event, obj) => callback(obj))},
+    // trackWasUploaded: (callback) => {ipcRenderer.on('notifyClient:trackUploaded', (_event, obj) => callback(obj))},
     trackWasUploaded: (callback) => {ipcRenderer.on('notifyClient:trackUploaded', (_event, obj) => callback(obj))},
     playlistDeleted: (callback) => {ipcRenderer.on('notifyClient:localPlaylistWasDeleted', (_event) => callback())},
 

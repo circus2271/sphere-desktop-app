@@ -85,6 +85,7 @@ const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPla
     if (action === 'reset') {
         tracksCounter.innerHTML = 'there are no tracks in a playlist'
         tracksCounter.setAttribute('data-current-count', '0')
+        uploadedTracksCounter.innerHTML = ''
     }
 }
 
@@ -95,7 +96,7 @@ window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => { // get va
       <li class="console-item">
         ${onlyOneTrack ? '1 track is added' : 
           // `${tracks.length} tracks are added`
-          tracks.length + 'tracks are added'
+          tracks.length + ' tracks are added'
         }
         
         to the playlist
@@ -111,11 +112,12 @@ deletePlaylistButton.onclick = () => {
     window.electronAPI.deleteAPlaylist()
 }
 
-
-window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount}) => {
+const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info')
+// window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount}) => {
+window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
     const trackCover = uploadedTrack.cover?.httpsCoverUrl
     // const trackname = uploadedTrack.trackname
-    const filename = uploadedTrack.filename
+    const {filename, duration} = uploadedTrack
 
     const coverHTML = trackCover ?
         `track cover: <img class="cover" src="${trackCover}" alt="${filename} cover">` :
@@ -123,12 +125,17 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, a
 
     const html = `
       <li class="console-item">
-        started uploading of a 1st track
+        track was uploaded
+        
         track info:
-        filename: ${filename}
+        filename: ${filename} 
+        duration: ${duration}
         ${coverHTML}
       </li>
     `
+    uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
+        `1 track is uploaded`:
+        `${allUploadedTrackCount} tracks are uploaded`
     // trackname: ${trackname}
     // track cover: <img src="${trackCover}" alt="${trackname}'s cover">
 

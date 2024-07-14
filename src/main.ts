@@ -44,7 +44,8 @@ const createWindow = () => {
     playlist.deleteLocalPlaylist()
     playlist.deleteUploadedTracksInfo()
 
-    console.log('local playlist deleted')
+    console.log('local playlist is deleted')
+    console.log('local information about uploaded tracks is also deleted')
     notifyClient('localPlaylistDeleted')
   })
 
@@ -61,14 +62,14 @@ const createWindow = () => {
     }
 
     if (notificationType === 'trackUploaded') {
-      if (Array.isArray(data)) {
-      // if (data instanceof Array) {
-        console.error('notifyClient: wrong data parameter provided. it should be track object instead of array of tracks')
-      }
+      // if (Array.isArray(data)) {
+      // // if (data instanceof Array) {
+      //   console.error('notifyClient: wrong data parameter provided. it should be track object instead of array of tracks')
+      // }
 
       mainWindow.webContents.send('notifyClient:trackUploaded', {
         uploadedTrack: data,
-        newlyUploadedTracksCount: (data as Track[]).length,
+        // newlyUploadedTracksCount: (data as Track[]).length,
         allUploadedTrackCount: playlist.uploadedTracksAmount})
     }
     if (notificationType === 'localPlaylistDeleted') {
@@ -82,19 +83,12 @@ const createWindow = () => {
     console.log('metadaaa', metadata)
     // const tracks = getTracksData(metadata)
     let tracks = getTracksData(metadata)
-    playlist.addTracks(tracks)
-    notifyClient('tracksAdded', tracks)
-
-    console.log('amount of tracks in playlist:', playlist.tracksAmount)
 
     mainWindow.webContents.send('metadata', metadata)
-    mainWindow.webContents.send('playlistIsReadyToBeUploaded')
-
-    console.log('sending a playlist..')
 
     const alreadyUploadedTracks = playlist.getUploadedTracks()
     // const tracks = playlist.getTracks().filter(track => {
-    tracks = playlist.getTracks().filter(track => {
+    const uniqueTracks = tracks.filter(track => {
       // if track is already uploaded remove it from tracks array
       const alreadyUploaded = alreadyUploadedTracks.find(uploadedTrack => {
         return uploadedTrack.filename === track.filename
@@ -102,11 +96,27 @@ const createWindow = () => {
 
       return !alreadyUploaded
     })
+
+    if (uniqueTracks.length === 0) {
+      console.log('no unique tracks were added, so playlist remains the same')
+
+      return
+    }
+
+    playlist.addTracks(uniqueTracks)
+    console.log('amount of tracks in playlist:', playlist.tracksAmount)
+    notifyClient('tracksAdded', uniqueTracks)
+
+    // by now, tracks are filtered, and only unique tracks are added to the playlist
+    // mainWindow.webContents.send('playlistIsReadyToBeUploaded')
+    // console.log('sending a playlist..')
+    console.log(`sending unique ${uniqueTracks.length === 1 ? 'track' : 'tracks'}..`)
+
     // tracks = playlist.getTracks().filter()
 
     // split those tracks into chunks (to bypass AT request limit)
     // split by 10, because AT may get only 10 records per once
-    const chunks = splitDataIntoChunks(tracks, 2)
+    const chunks = splitDataIntoChunks(uniqueTracks, 2)
     for await (const chunk of chunks) {
       // console.log('chunk', chunk.cover)
       // await Uploader.uploadTracksToCloudflareR2(chunk)
@@ -127,11 +137,12 @@ const createWindow = () => {
           }
 
           uploadedTracks.push(track)
+          playlist.addSingleUploadedTrack(track)
           notifyClient('trackUploaded', track)        }
       }
 
 
-      playlist.addUploadedTracks(uploadedTracks)
+      // playlist.addMultipleUploadedTracks(uploadedTracks)
       // console.log('upt', playlist.getUploadedTracks()
       try {
         await Uploader.uploadPlaylistToAirtable(uploadedTracks)
