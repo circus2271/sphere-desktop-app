@@ -17,7 +17,7 @@ export class Uploader {
                 })
             )
 
-            const uploadedTrackUrl = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/${track.filename}`
+            const uploadedTrackUrl = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/${encodeURI(track.filename)}`
 
             console.log(`${track.filename} is uploaded to cloudflare`)
 
@@ -44,7 +44,7 @@ export class Uploader {
             )
 
             console.log(`cover is also uploaded to cloudflare`)
-            const url = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/${bucketPath}`
+            const url = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/${encodeURI(bucketPath)}`
 
             return url
 
