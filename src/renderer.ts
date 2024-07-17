@@ -113,6 +113,8 @@
 //
 //
 // window.electronAPI.onMetaDataRecieve((data) => {
+// window.electronAPI.onTracksDataRecieve(tracks => {
+// ...
 //     console.log('metadata', data)
 //     // const images = data.map(dataItem => {
 //     data.forEach(dataItem => {

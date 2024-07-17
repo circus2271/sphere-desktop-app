@@ -1,3 +1,5 @@
+import {IAudioMetadata} from "music-metadata/lib/type";
+
 export type Cover = {
     imageBuffer: Buffer, // simplify it to string by now
     httpsCoverUrl?: string | null,
@@ -9,7 +11,10 @@ export type Cover = {
 export type FileData = {
     filename: string;
     filepath: string;
-}[]
+}
+
+
+export type TrackMetaData = IAudioMetadata & FileData
 
 // type FIleDataArray = File
 export interface Track {

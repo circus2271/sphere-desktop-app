@@ -6,7 +6,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
     sendFilePaths: (data) => ipcRenderer.send('dragAndDrop', data),
-    onMetaDataRecieve: (callback) => ipcRenderer.on('metadata', (_event, dataArray) => callback(dataArray)),
+    onTracksDataRecieve: (callback) => ipcRenderer.on('tracksData', (_event, tracksData) => callback(tracksData)),
     // uploadPlaylist: (playlist) => ipcRenderer.send('upload-playlist', playlist),
     sendAPlaylist: () => ipcRenderer.send('sendAPlaylist'),
     startPlaylistUploading: () => ipcRenderer.send('uploadingAPlaylistStarted'),

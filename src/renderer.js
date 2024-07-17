@@ -209,32 +209,15 @@ container.addEventListener('drop', e => {
 
     console.log('sfd')
     const files = e.dataTransfer.files
-    // const filenames =[]
-    // const filePaths = []
-    const fileData = []
-    // console.log(files[0])
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        console.log(file.name)
-        const notAnMp3 = !file.name.endsWith('.mp3');
-        if (notAnMp3) {
-            console.warn(`file: '${file.name}' isn't an mp3`)
-            continue
-        }
-        console.log(file.path)
-        const fileDataObject = {
-            filename: file.name,
-            filepath: file.path
-        }
+    const filesArray = [...files]
 
-        fileData.push(fileDataObject)
+    const tracks = filesArray.filter(file => file.name.endsWith('.mp3'))
+    const localUrls = tracks.map(track => track.path)
 
-        // filenames.push(file.name)
-        // filePaths.push(file.path)
 
+    if (localUrls.length > 0) {
+        window.electronAPI.sendFilePaths(localUrls)
     }
-
-    window.electronAPI.sendFilePaths(fileData)
 
     container.classList.remove('active')
 })

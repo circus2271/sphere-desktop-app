@@ -1,19 +1,10 @@
-// require('dotenv').config();
-import {Tags} from 'node-id3'
-// import {Track} from './typescript';
 import 'dotenv/config'
-// import { Track } from './drafts';
 
-import {
-    S3Client, S3ClientConfig,
-    // ListBucketsCommand,
-    // ListObjectsV2Command,
-    // GetObjectCommand,
-    // PutObjectCommand
-} from "@aws-sdk/client-s3";
-import {AirtableTrackItem, Track} from "./types";
+import {S3Client, S3ClientConfig,} from "@aws-sdk/client-s3";
+import {Cover, Track} from "./types";
+import {parseFile} from "music-metadata";
+import {IAudioMetadata} from "music-metadata/lib/type";
 import path from "path";
-
 
 export const {
     PERSONAL_ACCESS_TOKEN,
@@ -72,32 +63,40 @@ export const splitDataIntoChunks = (data: Track[], chunkSize = 10) => {
 //     return chunks
 // }
 
-// export const createAirtableData = (playlistMetaData) => {
-export const getTracksData = (playlistMetaData): Track[] => {
-// https://stackoverflow.com/a/41385149/9675926
-    const data = playlistMetaData.map((songData) => {
-        // console.log('songdata', songData.value)
-        const duration = `${Math.round(songData.value.length / 1000)}`
-        // console.log('duration', duration)
-        // console.log('length', songData.value.length)
+// function returns promise and a track array inside that promise
+export async function getTracksData(localUrls: string[]): Promise<Track[]> {
+    const tracks: Track[] = []
 
+    for await (const url of localUrls) {
+        const filepath = url
+        const filename = path.parse(filepath).base
+        const trackname = path.parse(filepath).name
 
-        return {
-                filepath: songData.value.filepath,
-                filename: songData.value.filename,
-                cover: songData.value.image,
-                // how to get trackname without an extension:
-                // https://stackoverflow.com/a/31615711/9675926
-                trackname: path.parse(songData.value.filename).name,
-                duration
+        const trackMetadata: IAudioMetadata = await parseFile(filepath)
+        const duration= trackMetadata.format.duration
+        const picture = trackMetadata.common.picture
+
+        const track: Track = {
+            duration: `${duration?.toFixed(1)}`,
+            filepath,
+            filename,
+            trackname
+        }
+
+        if (picture) {
+            const firstPicture = picture[0]
+
+            track.cover = {
+                imageBuffer: firstPicture.data,
+                mime: firstPicture.format
             }
+        }
 
-    })
+        tracks.push(track)
+    }
 
-    return data
+    return tracks
 }
-
-
 
 
 

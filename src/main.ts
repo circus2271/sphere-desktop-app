@@ -2,8 +2,6 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
 import {getName} from './t';
-// import { createAirtableData, parseMetadataFromImages, uploadPlaylistDataToAirtable } from './helpers/helpers';
-// import { createAirtableData,  uploadPlaylistDataToAirtable } from './helpers/helpers';
 import {getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
@@ -77,46 +75,46 @@ const createWindow = () => {
     }
   }
 
-  // mainWindow.webContents.send('notify-client', notifyClient('tra'))
-  ipcMain.on('dragAndDrop', async (_event, fileData) => {
-    const metadata = await playlist.parseMetaData(fileData)
-    console.log('metadaaa', metadata)
-    // const tracks = getTracksData(metadata)
-    let tracks = getTracksData(metadata)
-
-    mainWindow.webContents.send('metadata', metadata)
-
+  ipcMain.on('dragAndDrop', async (_event, localUrls: string[]) => {
     const alreadyUploadedTracks = playlist.getUploadedTracks()
-    // const tracks = playlist.getTracks().filter(track => {
-    const uniqueTracks = tracks.filter(track => {
-      // if track is already uploaded remove it from tracks array
+
+    // remove already uploaded tracks
+    const newUrls = localUrls.filter(localUrl => {
+      const filename = path.parse(localUrl).base
+
       const alreadyUploaded = alreadyUploadedTracks.find(uploadedTrack => {
-        return uploadedTrack.filename === track.filename
+        return uploadedTrack.filename === filename
       })
 
       return !alreadyUploaded
     })
 
-    if (uniqueTracks.length === 0) {
-      console.log('no unique tracks were added, so playlist remains the same')
+    if (newUrls.length === 0) {
+      // console.log('no unique tracks were added, so playlist remains the same')
+      console.log('all dropped files are already uploaded. exit')
 
       return
     }
 
-    playlist.addTracks(uniqueTracks)
+    const newTracks: Track[] = await getTracksData(newUrls)
+    console.log('new tracks data:', newTracks)
+
+    // mainWindow.webContents.send('tracksData', newTracks)
+
+    playlist.addTracks(newTracks)
     console.log('amount of tracks in playlist:', playlist.tracksAmount)
-    notifyClient('tracksAdded', uniqueTracks)
+    notifyClient('tracksAdded', newTracks)
 
     // by now, tracks are filtered, and only unique tracks are added to the playlist
     // mainWindow.webContents.send('playlistIsReadyToBeUploaded')
     // console.log('sending a playlist..')
-    console.log(`sending unique ${uniqueTracks.length === 1 ? 'track' : 'tracks'}..`)
+    console.log(`sending unique ${newTracks.length === 1 ? 'track' : 'tracks'}..`)
 
     // tracks = playlist.getTracks().filter()
 
     // split those tracks into chunks (to bypass AT request limit)
     // split by 10, because AT may get only 10 records per once
-    const chunks = splitDataIntoChunks(uniqueTracks, 2)
+    const chunks = splitDataIntoChunks(newTracks, 2)
     for await (const chunk of chunks) {
       // console.log('chunk', chunk.cover)
       // await Uploader.uploadTracksToCloudflareR2(chunk)
