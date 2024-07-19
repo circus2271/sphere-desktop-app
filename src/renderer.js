@@ -1,227 +1,129 @@
-
 import './styles/index.scss';
 // import {ipcRenderer} from "electron";
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
-
-
-const sendButton = document.getElementById('send')
+const sendButton = document.getElementById('send');
 sendButton.onclick = () => {
-    window.electronAPI.sendAPlaylist()
-    sendButton.disabled = true
-}
+    window.electronAPI.sendAPlaylist();
+    sendButton.disabled = true;
+};
 
 window.electronAPI.playlistIsReadyToBeUploaded(() => {
-    // alert(178)
-    sendButton.disabled = false
-})
+    sendButton.disabled = false;
+});
 
-
-//
-// window.electronAPI.onMetaDataRecieve((data) => {
-//     console.log('metadata', data)
-//     // const images = data.map(dataItem => {
-//     data.forEach(dataItem => {
-//         // const hasCover = !!dataItem.value.image
-//         // if dataItem.value.image exists
-//         const hasCover = dataItem.value.hasOwnProperty('image')
-//         if (!hasCover) {
-//             // alert('no cover')
-//             const placeholder = document.createElement('div')
-//
-//             placeholder.classList.add('placeholder')
-//             // placeholder.style.height = '200px'
-//             // placeholder.style.width = '200px'
-//             // placeholder.classList.add('without-cover')
-//             document.body.prepend(placeholder)
-//
-//             return
-//         }
-//
-//         const buffer = dataItem.value.image.imageBuffer;
-//         const blob = new Blob([buffer]);
-//         const objectURL = URL.createObjectURL(blob)
-//
-//         const image = new Image();
-//         image.style.height = '200px'
-//         image.style.width = '200px'
-//         image.onload = () => image.classList.add('loaded')
-//         image.src = objectURL
-//         // 0
-//         document.body.prepend(image)
-//     })
-// })
-//
-
-
-const htmlConsole = document.querySelector('#js-console')
-// const tracksCounter = document.querySelector('#js-added-tracks-counter')
-// const tracksCounter = document.querySelector('#track-count-summary')
-const tracksCounter = document.querySelector('#js-track-count-summary')
+const htmlConsole = document.querySelector('#js-console');
+const tracksCounter = document.querySelector('#js-track-count-summary');
 
 const addToHTMLConsole = (html) => {
-    htmlConsole.innerHTML += html
-}
+    htmlConsole.innerHTML += html;
+};
 
-// const increaseTracksCounter = (newTracksAmount) => {
-//     const currentCount = +tracksCounter.innerHTML // get html string and convert it to a number
-//     const newCount = currentCount + newTracksAmount
-//
-//     tracksCounter.innerHTML = newCount
-// }
 const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPlaylist}) => {
     if (action === 'add') {
-        const currentCount = +tracksCounter.getAttribute('data-current-count') // get current count and convert it to number
-        const updatedCount = currentCount + numberOfNewTracks
+        const currentCount = +tracksCounter.getAttribute('data-current-count');
+        const updatedCount = currentCount + numberOfNewTracks;
 
         tracksCounter.innerHTML = updatedCount === 1 ?
             'there is 1 track in a playlist' :
             `there are ${updatedCount} tracks in a playlist`;
 
-        tracksCounter.setAttribute('data-current-count', updatedCount)
+        tracksCounter.setAttribute('data-current-count', updatedCount);
     }
 
     if (action === 'reset') {
-        tracksCounter.innerHTML = 'there are no tracks in a playlist'
-        tracksCounter.setAttribute('data-current-count', '0')
-        uploadedTracksCounter.innerHTML = ''
+        tracksCounter.innerHTML = 'there are no tracks in a playlist';
+        tracksCounter.setAttribute('data-current-count', '0');
+        uploadedTracksCounter.innerHTML = '';
     }
-}
+};
 
-window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => { // get value addedTracks from recieved object, and use it as its a variable called "tracks"
-    const onlyOneTrack = tracks.length === 1
+window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => {
+    const onlyOneTrack = tracks.length === 1;
 
     const html = `
       <li class="console-item">
-        ${onlyOneTrack ? '1 track is added' : 
-          // `${tracks.length} tracks are added`
-          tracks.length + ' tracks are added'
-        }
-        
+        ${onlyOneTrack ? '1 track is added' : tracks.length + ' tracks are added'}
         to the playlist
       </li>
-    `
+    `;
 
-    updateTracksCounter({action: 'add', numberOfNewTracks: tracks.length})
-    addToHTMLConsole(html)
-})
+    updateTracksCounter({action: 'add', numberOfNewTracks: tracks.length});
+    addToHTMLConsole(html);
+});
 
-const deletePlaylistButton = document.querySelector('#js-delete-local-playlist')
+const deletePlaylistButton = document.querySelector('#js-delete-local-playlist');
 deletePlaylistButton.onclick = () => {
-    window.electronAPI.deleteAPlaylist()
-}
+    window.electronAPI.deleteAPlaylist();
+};
 
-const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info')
-// window.electronAPI.trackWasUploaded(({uploadedTrack, newlyUploadedTracksCount, allUploadedTrackCount}) => {
+const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
 window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
-    const trackCover = uploadedTrack.cover?.httpsCoverUrl
-    // const trackname = uploadedTrack.trackname
-    const {filename, duration} = uploadedTrack
+    const trackCover = uploadedTrack.cover?.httpsCoverUrl;
+    const {filename, duration} = uploadedTrack;
 
     const coverHTML = trackCover ?
         `track cover: <img class="cover" src="${trackCover}" alt="${filename} cover">` :
-        'track has no cover'
+        'track has no cover';
 
     const html = `
       <li class="console-item">
         track was uploaded
-        
         track info:
         filename: ${filename} 
         duration: ${duration}
         ${coverHTML}
       </li>
-    `
+    `;
     uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
-        `1 track is uploaded`:
-        `${allUploadedTrackCount} tracks are uploaded`
-    // trackname: ${trackname}
-    // track cover: <img src="${trackCover}" alt="${trackname}'s cover">
+        `1 track is uploaded` :
+        `${allUploadedTrackCount} tracks are uploaded`;
 
-    // enable this button, sinse there are now tracks to delete
-    deletePlaylistButton.disabled = false
-
-    addToHTMLConsole(html)
-})
-
+    deletePlaylistButton.disabled = false;
+    addToHTMLConsole(html);
+});
 
 window.electronAPI.playlistDeleted(() => {
-    // local playlist is already deletede on a local server,
-    // so clean up the view on a client side
-    tracksCounter.innerHTML = '0'
-
-    // disable "delete a playlist" button, sinse there is no playlist and hense nothing to delete
-    deletePlaylistButton.disabled = true
-
-    addToHTMLConsole('<li class="console-item">local playlist was deleted</li>')
-
-    updateTracksCounter({action: 'reset'})
-})
-
-
-
-
-
-
-
-
-
-
-// window.electronAPI.startPlaylistUploading(() => {
-//     alert(17)
-//     setButton.disabled = true
-// })
-
-
-
-
-
+    tracksCounter.innerHTML = '0';
+    deletePlaylistButton.disabled = true;
+    addToHTMLConsole('<li class="console-item">local playlist was deleted</li>');
+    updateTracksCounter({action: 'reset'});
+});
 
 // drag and drop
 
-const container = document.querySelector('.container')
+const container = document.querySelector('.container');
 
 container.addEventListener('dragenter', (e) => {
-    container.classList.add('active')
-})
+    container.classList.add('active');
+});
 
 container.addEventListener('dragleave', (e) => {
     if (e.target === container)
-        container.classList.remove('active')
-})
-
-// container.addEventListener('click', (e) => {
-//   container.classList.toggle('active')
-// })
-
+        container.classList.remove('active');
+});
 
 container.addEventListener('dragover', e => {
-    // without this an image will be opened in a new tab
-    e.preventDefault()
-})
+    e.preventDefault();
+});
 
 container.addEventListener('drop', e => {
-    // without this an image will be opened in a new tab
-    e.preventDefault()
+    e.preventDefault();
 
-    sendButton.disabled = true
+    sendButton.disabled = true;
 
-    console.log('sfd')
-    const files = e.dataTransfer.files
-    const filesArray = [...files]
+    const files = e.dataTransfer.files;
+    const filesArray = [...files];
 
-    const tracks = filesArray.filter(file => file.name.endsWith('.mp3'))
-    const localUrls = tracks.map(track => track.path)
-
+    const tracks = filesArray.filter(file => file.name.endsWith('.mp3'));
+    const localUrls = tracks.map(track => track.path);
 
     if (localUrls.length > 0) {
-        window.electronAPI.sendFilePaths(localUrls)
+        window.electronAPI.sendFilePaths(localUrls);
+        // Добавляем вызов для запуска обработки аудио
+        window.electronAPI.startProcessing(localUrls);
     }
 
-    container.classList.remove('active')
-})
-
-
-// alert(32443)
-
+    container.classList.remove('active');
+});

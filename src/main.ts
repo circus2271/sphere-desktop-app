@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
+import * as fs from 'fs';
+import { processFiles } from './audioProcessor'; 
+
 import {getName} from './t';
 import {getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
