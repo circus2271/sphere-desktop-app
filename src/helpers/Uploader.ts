@@ -61,38 +61,10 @@ export class Uploader {
     static async uploadPlaylistToAirtable(tracks: Track[]) {
 
         const dataToUpload = {
+
             records: tracks.map(track => {
-                const converted = {
-                    // filename: track.filename,
-                    trackUrl: track.uploadedTrackUrl,
-                    duration: track.duration,
-                    // TODO: объединить AirtableTrackItem и Track в одну сущность (чтобы снизить дублирование кода)
-                    'Track name': track.trackname,
-                    hashtag: track.playlistHashTag,
-                } as AirtableTrackItem
-
-                const hasCover = track.cover?.httpsCoverUrl
-                if (hasCover) {
-                    converted.image = [{
-                        url: track.cover?.httpsCoverUrl as string
-                    }]
-                }
-
-                if (track.artistName) {
-                    converted['Artist name'] = track.artistName
-                }
-
-
-                if (track.albumName) {
-                    converted['Album name'] = track.albumName
-                }
-
-                if (track.albumYear) {
-                    converted['Album year'] = track.albumYear
-                }
-
                 return {
-                    fields: converted
+                    fields: track.airtableData
                 }
             })
         }

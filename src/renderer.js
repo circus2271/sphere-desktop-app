@@ -62,7 +62,11 @@ if (deletePlaylistButton) {
 
 const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
 window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
-    const trackCover = uploadedTrack.cover?.httpsCoverUrl;
+    const uploadedData = uploadedTrack.airtableData
+
+
+    // if there is an image, get that image url
+    const trackCover = uploadedTrack.airtableData.image && uploadedTrack.airtableData.image[0].url
     const {filename, duration} = uploadedTrack;
 
     const coverHTML = trackCover ?
@@ -82,13 +86,13 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => 
         `1 track is uploaded` :
         `${allUploadedTrackCount} tracks are uploaded`;
 
-    deletePlaylistButton.disabled = false;
+    // deletePlaylistButton.disabled = false;
     addToHTMLConsole(html);
 });
 
 window.electronAPI.playlistDeleted(() => {
     tracksCounter.innerHTML = '0';
-    deletePlaylistButton.disabled = true;
+    // deletePlaylistButton.disabled = true;
     addToHTMLConsole('<li class="console-item">local playlist was deleted</li>');
     updateTracksCounter({action: 'reset'});
 });

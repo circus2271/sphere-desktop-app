@@ -150,14 +150,22 @@ const createWindow = () => {
         // try to upload the cover
         const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
         if (uploadedTrackUrl) {
-          track.uploadedTrackUrl = uploadedTrackUrl
+          track.airtableData.trackUrl = uploadedTrackUrl
           const cover = track.cover
+          // const hasCover = track.hasOwnProperty('cover')
           if (cover) {
             const trackname = track.trackname
             const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
 
-            cover.httpsCoverUrl = uploadedCoverUrl
-            track.cover = cover // sorry..
+            // cover.httpsCoverUrl = uploadedCoverUrl
+            // track.cover = cover // sorry..
+            if (uploadedCoverUrl) {
+              track.airtableData.image = [
+                {
+                  url: uploadedCoverUrl
+                }
+              ]
+            }
           }
 
           uploadedTracks.push(track)

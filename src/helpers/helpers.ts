@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import {S3Client, S3ClientConfig,} from "@aws-sdk/client-s3";
-import {Track} from "./types";
+import {AirtableTrackItem, Track} from "./types";
 import {parseFile} from "music-metadata";
 import {IAudioMetadata} from "music-metadata/lib/type";
 import path from "path";
@@ -45,16 +45,31 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
         const trackMetadata: IAudioMetadata = await parseFile(filepath)
         const duration= trackMetadata.format.duration
 
-        const picture = trackMetadata.common.picture
-        const artistName = trackMetadata.common.artist
-        const albumName = trackMetadata.common.album
-        const albumYear = trackMetadata.common.year?.toString()
+        const {
+            picture,
+            artist,
+            album,
+            year
+        } = trackMetadata.common
+        // const picture = trackMetadata.common.picture
+        // const artistName = trackMetadata.common.artist
+        // const albumName = trackMetadata.common.album
+        // const albumYear = trackMetadata.common.year?.toString()
 
         const track: Track = {
             duration: `${duration?.toFixed(1)}`,
             filepath,
             filename,
             trackname,
+            airtableData: {
+                'Artist name': artist || '',
+                'Album name': album || '',
+                'Album year': year?.toString() || '',
+                'Track name': trackname,
+                hashtag: playlistHashTag,
+                trackUrl: filepath,
+                duration: `${duration?.toFixed(1)}`,
+            }
         }
 
         if (picture) {
@@ -66,21 +81,6 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
             }
         }
 
-        if (artistName) {
-            track.artistName = artistName
-        }
-
-        if (albumName) {
-            track.albumName = albumName
-        }
-
-        if (albumYear) {
-            track.albumYear = albumYear
-        }
-
-        if (playlistHashTag) {
-            track.playlistHashTag = playlistHashTag
-        }
 
         tracks.push(track)
     }
