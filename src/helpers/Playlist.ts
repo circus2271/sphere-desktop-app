@@ -3,6 +3,7 @@ import {Track} from "./types";
 export class Playlist {
     private tracks: Track[] = []
     private uploadedTracks: Track[] = []
+    private hashTag = ''; // TODO
 
     // private uploadQueque: Track[] = []
 

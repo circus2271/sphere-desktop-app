@@ -2,10 +2,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
 import * as fs from 'fs';
-import { processFiles } from './audioProcessor'; 
+import { processFiles } from './helpers/audioProcessing';
 
 import {getName} from './t';
-import {getTracksData, splitDataIntoChunks} from './helpers/helpers';
+import {audioProcessingOutputFolder, getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
 import {Track} from "./helpers/types";
@@ -78,7 +78,18 @@ const createWindow = () => {
     }
   }
 
-  ipcMain.on('dragAndDrop', async (_event, localUrls: string[]) => {
+  ipcMain.on('dragAndDrop', async (_event, folderPath: string) => {
+
+    const files = fs.readdirSync(folderPath);
+
+    const playlistHashTag = path.parse(folderPath).name
+
+    const mp3Files = files.filter(file => {
+      return path.extname(file) === '.mp3';
+    });
+
+    const localUrls = mp3Files.map(filename => path.resolve(folderPath, filename))
+
     const alreadyUploadedTracks = playlist.getUploadedTracks()
 
     // remove already uploaded tracks
@@ -99,7 +110,16 @@ const createWindow = () => {
       return
     }
 
-    const newTracks: Track[] = await getTracksData(newUrls)
+    const newTracks: Track[] = await getTracksData(newUrls, playlistHashTag)
+    // const chunks1 = splitDataIntoChunks(newTracks)
+    // // for await (let chunk of chunks) {
+    // for await (const chunk of chunks1) {
+    //   await processFiles(chunk, audioProcessingOutputFolder)
+    // }
+
+
+    // processFiles(newTracks)
+
     console.log('new tracks data:', newTracks)
 
     // mainWindow.webContents.send('tracksData', newTracks)
@@ -117,12 +137,15 @@ const createWindow = () => {
 
     // split those tracks into chunks (to bypass AT request limit)
     // split by 10, because AT may get only 10 records per once
-    const chunks = splitDataIntoChunks(newTracks, 2)
+    // const chunks = splitDataIntoChunks(newTracks, 2)
+    const chunks = splitDataIntoChunks(newTracks)
     for await (const chunk of chunks) {
+      const modifiedTracks = await processFiles(chunk, audioProcessingOutputFolder)
+
       // console.log('chunk', chunk.cover)
       // await Uploader.uploadTracksToCloudflareR2(chunk)
       const uploadedTracks = []
-      for await (const track of chunk) {
+      for await (const track of modifiedTracks) {
         // try to upload the track
         // try to upload the cover
         const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
@@ -147,6 +170,21 @@ const createWindow = () => {
       // console.log('upt', playlist.getUploadedTracks()
       try {
         await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+
+        // if everything ok, remove tracks from output folder (delete them)
+        //   https://stackoverflow.com/a/42182416/9675926
+
+
+        const modifiedTracks = fs.readdirSync(audioProcessingOutputFolder);
+
+        modifiedTracks.forEach(file => {
+          const filePath = path.join(audioProcessingOutputFolder, file);
+
+          if (path.extname(file) === '.mp3') {
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filePath}`);
+          }
+        });
       } catch (error) {
         console.log(error)
       }

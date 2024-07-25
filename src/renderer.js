@@ -3,15 +3,15 @@ import './styles/index.scss';
 
 console.log('👋 This message is being logged by "renderer.js", included via Vite');
 
-const sendButton = document.getElementById('send');
-sendButton.onclick = () => {
-    window.electronAPI.sendAPlaylist();
-    sendButton.disabled = true;
-};
+// const sendButton = document.getElementById('send');
+// sendButton.onclick = () => {
+//     window.electronAPI.sendAPlaylist();
+//     sendButton.disabled = true;
+// };
 
-window.electronAPI.playlistIsReadyToBeUploaded(() => {
-    sendButton.disabled = false;
-});
+// window.electronAPI.playlistIsReadyToBeUploaded(() => {
+//     sendButton.disabled = false;
+// });
 
 const htmlConsole = document.querySelector('#js-console');
 const tracksCounter = document.querySelector('#js-track-count-summary');
@@ -54,9 +54,11 @@ window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => {
 });
 
 const deletePlaylistButton = document.querySelector('#js-delete-local-playlist');
-deletePlaylistButton.onclick = () => {
-    window.electronAPI.deleteAPlaylist();
-};
+if (deletePlaylistButton) {
+    deletePlaylistButton.onclick = () => {
+        window.electronAPI.deleteAPlaylist();
+    };
+}
 
 const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
 window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
@@ -111,19 +113,31 @@ container.addEventListener('dragover', e => {
 container.addEventListener('drop', e => {
     e.preventDefault();
 
-    sendButton.disabled = true;
+    // sendButton.disabled = true;
 
-    const files = e.dataTransfer.files;
-    const filesArray = [...files];
 
-    const tracks = filesArray.filter(file => file.name.endsWith('.mp3'));
-    const localUrls = tracks.map(track => track.path);
+    for (let item of event.dataTransfer.items) {
+        if (item.kind === 'file' && item.webkitGetAsEntry().isDirectory) {
+            const folderPath = item.getAsFile().path;
+            console.log('Dropped folder path:', folderPath);
 
-    if (localUrls.length > 0) {
-        window.electronAPI.sendFilePaths(localUrls);
-        // Добавляем вызов для запуска обработки аудио
-        window.electronAPI.startProcessing(localUrls);
+            window.electronAPI.sendFolderPath(folderPath);
+        }
     }
 
     container.classList.remove('active');
+
+    // const files = e.dataTransfer.files;
+    // const filesArray = [...files];
+    //
+    // const tracks = filesArray.filter(file => file.name.endsWith('.mp3'));
+    // const localUrls = tracks.map(track => track.path);
+    //
+    // if (localUrls.length > 0) {
+    //     window.electronAPI.sendFilePaths(localUrls);
+    //     // Добавляем вызов для запуска обработки аудио
+    //     window.electronAPI.startProcessing(localUrls);
+    // }
+    //
+    // container.classList.remove('active');
 });
