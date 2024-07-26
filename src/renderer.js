@@ -67,7 +67,8 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => 
 
     // if there is an image, get that image url
     const trackCover = uploadedTrack.airtableData.image && uploadedTrack.airtableData.image[0].url
-    const {filename, duration} = uploadedTrack;
+    const {filename} = uploadedTrack;
+    const duration = uploadedData.duration
 
     const coverHTML = trackCover ?
         `track cover: <img class="cover" src="${trackCover}" alt="${filename} cover">` :

@@ -23,10 +23,10 @@ export interface Track {
 }
 
 export interface AirtableData {
-    'Artist name'?: string,
-    'Track name'?: string,
-    'Album name'?: string,
-    'Album year'?: string,
+    'artist name'?: string,
+    'track name'?: string,
+    'album name'?: string,
+    'album year'?: string,
     // playlistHashTag: string
     hashtag: string, // playlist hashtag (folder name)
     image?: {

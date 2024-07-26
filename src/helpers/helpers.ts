@@ -35,7 +35,7 @@ console.log('audioProcessingOutputFolder', audioProcessingOutputFolder);
 
 export async function getTrackDuration(localUrl: string): Promise<string>   {
     const trackMetadata: IAudioMetadata = await parseFile(localUrl)
-    const duration = trackMetadata.format.duration?.toFixed(1) || ''
+    const duration = trackMetadata.format.duration?.toFixed() || ''
 
     return duration
 }
@@ -64,15 +64,15 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
         // const albumYear = trackMetadata.common.year?.toString()
 
         const track: Track = {
-            duration: duration?.toFixed(1) || '',
+            duration: duration?.toFixed() || '',
             filepath,
             filename,
             trackname,
             airtableData: {
-                'Artist name': artist || '',
-                'Album name': album || '',
-                'Album year': year?.toString() || '',
-                'Track name': trackname,
+                'artist name': artist || '',
+                'album name': album || '',
+                'album year': year?.toString() || '',
+                'track name': trackname,
                 hashtag: playlistHashTag,
                 trackUrl: filepath,
                 // duration: `${duration?.toFixed(1)}`,
