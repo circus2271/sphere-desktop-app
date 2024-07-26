@@ -12,7 +12,8 @@ export class Uploader {
                 new PutObjectCommand({
                     Bucket: 'sphere-bucket',
                     Key: track.filename,
-                    Body: fs.createReadStream(track.filepath),
+                    // Body: fs.createReadStream(track.filepath),
+                    Body: fs.createReadStream(track.processedFileLocalUrl as string),
                     ContentType: 'audio/mpeg'
                 })
             )
