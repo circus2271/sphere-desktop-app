@@ -12,7 +12,7 @@ import ffmpegPath from 'ffmpeg-static';
 import {path as ffprobePath} from 'ffprobe-static';
 import async from 'async';
 import {Track} from "./types";
-import {audioProcessingOutputFolder} from "./helpers";
+import {audioProcessingOutputFolder, getTrackDuration} from "./helpers";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -68,12 +68,13 @@ export const processFiles = (mp3Files: Track[], outputPath: string): Promise<Tra
                     }
                 })
                 // this happens after file is processed and saved (without errors)
-                .on('end', () => {
+                .on('end', async () => {
                     console.log(`Successfully processed file: ${outputFile}`);
 
                     // const modifiedTrackLocalUrl = path.resolve(audioProcessingOutputFolder, trackName)
                     // track.processedFileLocalUrl = modifiedTrackLocalUrl
                     track.processedFileLocalUrl = path.resolve(audioProcessingOutputFolder, trackName)
+                    track.processedFileDuration = await getTrackDuration(track.processedFileLocalUrl)
                     callback();
                 })
                 .on('error', (err) => {

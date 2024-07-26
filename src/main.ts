@@ -146,8 +146,13 @@ const createWindow = () => {
       // await Uploader.uploadTracksToCloudflareR2(chunk)
       const uploadedTracks = []
       for await (const track of modifiedTracks) {
+        // add track duration
+        // do it here, because here audio file is already processed
+        track.airtableData.duration = track.processedFileDuration
+
         // try to upload the track
         // try to upload the cover
+
         const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
         if (uploadedTrackUrl) {
           track.airtableData.trackUrl = uploadedTrackUrl

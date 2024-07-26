@@ -33,6 +33,13 @@ export const audioProcessingOutputFolder = path.join(__dirname, '../../output')
 
 console.log('audioProcessingOutputFolder', audioProcessingOutputFolder);
 
+export async function getTrackDuration(localUrl: string): Promise<string>   {
+    const trackMetadata: IAudioMetadata = await parseFile(localUrl)
+    const duration = trackMetadata.format.duration?.toFixed(1) || ''
+
+    return duration
+}
+
 // function returns promise and a track array inside that promise
 export async function getTracksData(localUrls: string[], playlistHashTag: string): Promise<Track[]> {
     const tracks: Track[] = []
@@ -57,7 +64,7 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
         // const albumYear = trackMetadata.common.year?.toString()
 
         const track: Track = {
-            duration: `${duration?.toFixed(1)}`,
+            duration: duration?.toFixed(1) || '',
             filepath,
             filename,
             trackname,
@@ -68,7 +75,7 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
                 'Track name': trackname,
                 hashtag: playlistHashTag,
                 trackUrl: filepath,
-                duration: `${duration?.toFixed(1)}`,
+                // duration: `${duration?.toFixed(1)}`,
             }
         }
 

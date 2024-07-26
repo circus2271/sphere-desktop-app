@@ -17,6 +17,7 @@ export interface Track {
     trackname: string, // filename without an extension
     // uploadedTrackUrl?: string,
     processedFileLocalUrl?: string,
+    processedFileDuration?: string,
 
     airtableData: AirtableData
 }
@@ -32,6 +33,6 @@ export interface AirtableData {
         url: string
     }[], // image property is an array of objects
     trackUrl?: string,
-    duration: string
+    duration?: string // added after file processing
     // uploadedTrackUrl: string
 }
