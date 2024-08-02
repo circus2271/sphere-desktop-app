@@ -2,13 +2,14 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
 import * as fs from 'fs';
-import { processFiles } from './helpers/audioProcessing';
+import {processFile, processFiles} from './helpers/audioProcessing';
 
 import {getName} from './t';
 import {audioProcessingOutputFolder, getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
 import {Track} from "./helpers/types";
+import async from "async";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -78,6 +79,109 @@ const createWindow = () => {
     }
   }
 
+  const cargo = async.cargo((items: Track[], cargoCallback) => {
+    // console.log('start processing of new cargo portion')
+    console.log('start processing of a new tracks portion')
+    console.log('portion length is', items.length)
+    const modifiedTracks: Track[] = []
+    const queue = async.queue(async (track: Track, queueCallback) => {
+      // process item
+      // item.processed = true
+      try {
+        const modifiedTrack = await processFile(track, audioProcessingOutputFolder)
+        modifiedTracks.push(modifiedTrack)
+      } catch (error) {
+        console.error(error)
+        console.error('error when trying to process track', track.trackname)
+      }
+      queueCallback()
+    }, 5) // process 5 items in parallel (maximum)
+
+    //when all items are processed
+    // await queue.drain()
+    queue.drain(async () => {
+      if (modifiedTracks.length === 0) {
+        console.log('no tracks in this chunk are processed')
+
+        // notify "library" that it may finish processing of this tracks chunk (portion of tracks)
+        // after this callback, the library may start processing of another tracks portion
+        cargoCallback()
+        return
+      }
+      console.log('all items in portion are processed')
+      console.log('processed items', modifiedTracks)
+      // cargoCallback() // start processing new portions of items (if any in cargo)
+
+      // console.log('chunk', chunk.cover)
+      // await Uploader.uploadTracksToCloudflareR2(chunk)
+      const uploadedTracks = []
+      for await (const track of modifiedTracks) {
+        // add track duration
+        // do it here, because here audio file is already processed
+        track.airtableData.duration = track.processedFileDuration
+
+        // try to upload the track
+        // try to upload the cover
+
+        const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+        if (uploadedTrackUrl) {
+          track.airtableData.trackUrl = uploadedTrackUrl
+          const cover = track.cover
+          // const hasCover = track.hasOwnProperty('cover')
+          if (cover) {
+            const trackname = track.trackname
+            const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
+
+            // cover.httpsCoverUrl = uploadedCoverUrl
+            // track.cover = cover // sorry..
+            if (uploadedCoverUrl) {
+              track.airtableData.image = [
+                {
+                  url: uploadedCoverUrl
+                }
+              ]
+            }
+          }
+
+          uploadedTracks.push(track)
+          playlist.addSingleUploadedTrack(track)
+          notifyClient('trackUploaded', track)        }
+      }
+
+
+      // playlist.addMultipleUploadedTracks(uploadedTracks)
+      // console.log('upt', playlist.getUploadedTracks()
+      try {
+        await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+
+        // if everything ok, remove tracks from output folder (delete them)
+        //   https://stackoverflow.com/a/42182416/9675926
+
+
+        const outputFolderFiles = fs.readdirSync(audioProcessingOutputFolder);
+
+        outputFolderFiles.forEach(file => {
+          const filePath = path.join(audioProcessingOutputFolder, file);
+
+          if (path.extname(file) === '.mp3') {
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filePath}`);
+          }
+        });
+      } catch (error) {
+        console.log(error)
+      }
+
+      // notify "library" that it may finish processing of this tracks chunk (portion of tracks)
+      // after this callback, the library may start processing of another tracks portion
+      cargoCallback()
+    })
+
+
+
+    queue.push(items)
+  }, 10)
+
   ipcMain.on('dragAndDrop', async (_event, folderPath: string) => {
 
     const files = fs.readdirSync(folderPath);
@@ -139,68 +243,70 @@ const createWindow = () => {
     // split by 10, because AT may get only 10 records per once
     // const chunks = splitDataIntoChunks(newTracks, 2)
     const chunks = splitDataIntoChunks(newTracks)
-    for await (const chunk of chunks) {
-      const modifiedTracks = await processFiles(chunk, audioProcessingOutputFolder)
-
-      // console.log('chunk', chunk.cover)
-      // await Uploader.uploadTracksToCloudflareR2(chunk)
-      const uploadedTracks = []
-      for await (const track of modifiedTracks) {
-        // add track duration
-        // do it here, because here audio file is already processed
-        track.airtableData.duration = track.processedFileDuration
-
-        // try to upload the track
-        // try to upload the cover
-
-        const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
-        if (uploadedTrackUrl) {
-          track.airtableData.trackUrl = uploadedTrackUrl
-          const cover = track.cover
-          // const hasCover = track.hasOwnProperty('cover')
-          if (cover) {
-            const trackname = track.trackname
-            const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
-
-            // cover.httpsCoverUrl = uploadedCoverUrl
-            // track.cover = cover // sorry..
-            if (uploadedCoverUrl) {
-              track.airtableData.image = [
-                {
-                  url: uploadedCoverUrl
-                }
-              ]
-            }
-          }
-
-          uploadedTracks.push(track)
-          playlist.addSingleUploadedTrack(track)
-          notifyClient('trackUploaded', track)        }
-      }
-
-
-      // playlist.addMultipleUploadedTracks(uploadedTracks)
-      // console.log('upt', playlist.getUploadedTracks()
-      try {
-        await Uploader.uploadPlaylistToAirtable(uploadedTracks)
-
-        // if everything ok, remove tracks from output folder (delete them)
-        //   https://stackoverflow.com/a/42182416/9675926
-
-
-        const modifiedTracks = fs.readdirSync(audioProcessingOutputFolder);
-
-        modifiedTracks.forEach(file => {
-          const filePath = path.join(audioProcessingOutputFolder, file);
-
-          if (path.extname(file) === '.mp3') {
-            fs.unlinkSync(filePath);
-            console.log(`Deleted file: ${filePath}`);
-          }
-        });
-      } catch (error) {
-        console.log(error)
-      }
+    for (const chunk of chunks) {
+      // start processing a "chunk" of tracks
+      cargo.push(chunk)
+      // const modifiedTracks = await processFiles(chunk, audioProcessingOutputFolder)
+      //
+      // // console.log('chunk', chunk.cover)
+      // // await Uploader.uploadTracksToCloudflareR2(chunk)
+      // const uploadedTracks = []
+      // for await (const track of modifiedTracks) {
+      //   // add track duration
+      //   // do it here, because here audio file is already processed
+      //   track.airtableData.duration = track.processedFileDuration
+      //
+      //   // try to upload the track
+      //   // try to upload the cover
+      //
+      //   const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+      //   if (uploadedTrackUrl) {
+      //     track.airtableData.trackUrl = uploadedTrackUrl
+      //     const cover = track.cover
+      //     // const hasCover = track.hasOwnProperty('cover')
+      //     if (cover) {
+      //       const trackname = track.trackname
+      //       const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
+      //
+      //       // cover.httpsCoverUrl = uploadedCoverUrl
+      //       // track.cover = cover // sorry..
+      //       if (uploadedCoverUrl) {
+      //         track.airtableData.image = [
+      //           {
+      //             url: uploadedCoverUrl
+      //           }
+      //         ]
+      //       }
+      //     }
+      //
+      //     uploadedTracks.push(track)
+      //     playlist.addSingleUploadedTrack(track)
+      //     notifyClient('trackUploaded', track)        }
+      // }
+      //
+      //
+      // // playlist.addMultipleUploadedTracks(uploadedTracks)
+      // // console.log('upt', playlist.getUploadedTracks()
+      // try {
+      //   await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+      //
+      //   // if everything ok, remove tracks from output folder (delete them)
+      //   //   https://stackoverflow.com/a/42182416/9675926
+      //
+      //
+      //   const modifiedTracks = fs.readdirSync(audioProcessingOutputFolder);
+      //
+      //   modifiedTracks.forEach(file => {
+      //     const filePath = path.join(audioProcessingOutputFolder, file);
+      //
+      //     if (path.extname(file) === '.mp3') {
+      //       fs.unlinkSync(filePath);
+      //       console.log(`Deleted file: ${filePath}`);
+      //     }
+      //   });
+      // } catch (error) {
+      //   console.log(error)
+      // }
       // console.log('pr:', track)
     }
 
