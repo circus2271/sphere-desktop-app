@@ -194,14 +194,15 @@ const createWindow = () => {
 
     const localUrls = mp3Files.map(filename => path.resolve(folderPath, filename))
 
-    const alreadyUploadedTracks = playlist.getUploadedTracks()
+    // const alreadyUploadedTracks = playlist.getUploadedTracks()
+    const uniqueTrackFilenames = playlist.uniqueTrackFilenames
 
     // remove already uploaded tracks
     const newUrls = localUrls.filter(localUrl => {
-      const filename = path.parse(localUrl).base
+      const newFilename = path.parse(localUrl).base
 
-      const alreadyUploaded = alreadyUploadedTracks.find(uploadedTrack => {
-        return uploadedTrack.filename === filename
+      const alreadyUploaded = uniqueTrackFilenames.find(filename => {
+        return filename === newFilename
       })
 
       return !alreadyUploaded
@@ -213,6 +214,15 @@ const createWindow = () => {
 
       return
     }
+
+    // не идеально, но может сэкономить время
+    // нам нужно проверять, какие трэки у нас новые, а какие у нас уже есть
+    // те трэки, которые у нас уже есть, мы повторно не добавляем и не обрабатываем
+    //
+    // если мы закидываем сразу несколько плейлистов, они начинаются добавляться одновременно
+    // в идеале, у нас должна быть отдеальная очередь и на проверку трэков тоже
+    const newFilenames = newUrls.map(url => path.parse(url).base)
+    playlist.uniqueTrackFilenames.push(...newFilenames)
 
     const newTracks: Track[] = await getTracksData(newUrls, playlistHashTag)
     // const chunks1 = splitDataIntoChunks(newTracks)

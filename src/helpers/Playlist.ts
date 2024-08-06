@@ -3,9 +3,8 @@ import {Track} from "./types";
 export class Playlist {
     private tracks: Track[] = []
     private uploadedTracks: Track[] = []
-    private hashTag = ''; // TODO
+    uniqueTrackFilenames: string[] = []
 
-    // private uploadQueque: Track[] = []
 
     addMultipleUploadedTracks(tracks: Track[]) {
         this.uploadedTracks.push(...tracks)
