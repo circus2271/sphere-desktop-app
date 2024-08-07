@@ -36,3 +36,8 @@ export interface AirtableData {
     duration?: string // added after file processing
     // uploadedTrackUrl: string
 }
+
+export type DataToProcess = {
+    localUrl: string,
+    playlistHashTag: string
+}[]

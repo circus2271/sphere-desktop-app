@@ -95,6 +95,8 @@ export class Uploader {
             } else {
                 console.log(error)
             }
+
+            // return null
         }
     }
 }
