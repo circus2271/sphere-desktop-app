@@ -74,7 +74,7 @@ export async function getTracksData(localUrls: string[], playlistHashTag: string
                 'album year': year?.toString() || '',
                 'track name': trackname,
                 hashtag: playlistHashTag,
-                trackUrl: filepath,
+                //trackUrl: filepath,
                 // duration: `${duration?.toFixed(1)}`,
             }
         }

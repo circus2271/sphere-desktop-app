@@ -8,7 +8,7 @@ import {getName} from './t';
 import {audioProcessingOutputFolder, getTracksData, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
-import {Track} from "./helpers/types";
+import {DataToProcess, Track} from "./helpers/types";
 import async from "async";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -79,10 +79,63 @@ const createWindow = () => {
     }
   }
 
-  const cargo = async.cargo((items: Track[], cargoCallback) => {
+  const cargo = async.cargo( async (data, cargoCallback) => {
+
+    const localUrls = (data as DataToProcess).map(dataItem => dataItem.localUrl)
+    const playlistHashTag = (data as DataToProcess)[0].playlistHashTag // it's stupid but it works (hopefully..)
+
+    // const alreadyUploadedTracks = playlist.getUploadedTracks()
+    const uniqueTrackFilenames = playlist.uniqueTrackFilenames
+
+    // remove already uploaded tracks
+    const newUrls = localUrls.filter(localUrl => {
+      const newFilename = path.parse(localUrl).base
+
+      const alreadyAdded = uniqueTrackFilenames.find(filename => {
+        return filename === newFilename
+      })
+
+      return !alreadyAdded
+    })
+
+    if (newUrls.length === 0) {
+      // console.log('no unique tracks were added, so playlist remains the same')
+      console.log('all dropped files are already uploaded. exit')
+
+      // nothing to process
+      cargoCallback()
+      return
+    }
+
+    // не идеально, но может сэкономить время
+    // нам нужно проверять, какие трэки у нас новые, а какие у нас уже есть
+    // те трэки, которые у нас уже есть, мы повторно не добавляем и не обрабатываем
+    //
+    // если мы закидываем сразу несколько плейлистов, они начинаются добавляться одновременно
+    // в идеале, у нас должна быть отдеальная очередь и на проверку трэков тоже
+    const newFilenames = newUrls.map(url => path.parse(url).base)
+    playlist.uniqueTrackFilenames.push(...newFilenames)
+
+    const newTracks: Track[] = await getTracksData(newUrls, playlistHashTag)
+
+
+    console.log('new tracks data:', newTracks)
+
+    playlist.addTracks(newTracks)
+    console.log('amount of tracks in playlist:', playlist.tracksAmount)
+    notifyClient('tracksAdded', newTracks)
+
+    // by now, tracks are filtered, and only unique tracks are added to the playlist
+    // mainWindow.webContents.send('playlistIsReadyToBeUploaded')
+    // console.log('sending a playlist..')
+    console.log(`sending unique ${newTracks.length === 1 ? 'track' : 'tracks'}..`)
+
+
+
+
     // console.log('start processing of new cargo portion')
     console.log('start processing of a new tracks portion')
-    console.log('portion length is', items.length)
+    console.log('portion length is', newTracks.length)
     const modifiedTracks: Track[] = []
     const queue = async.queue(async (track: Track, queueCallback) => {
       // process item
@@ -123,34 +176,44 @@ const createWindow = () => {
         // try to upload the track
         // try to upload the cover
 
-        const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
-        if (uploadedTrackUrl) {
-          track.airtableData.trackUrl = uploadedTrackUrl
-          const cover = track.cover
-          // const hasCover = track.hasOwnProperty('cover')
-          if (cover) {
-            const trackname = track.trackname
-            const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
+        // try {
+          const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+          if (uploadedTrackUrl) {
+            track.airtableData.trackUrl = uploadedTrackUrl
+            const cover = track.cover
+            // const hasCover = track.hasOwnProperty('cover')
+            if (cover) {
+              const trackname = track.trackname
+              const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
 
-            // cover.httpsCoverUrl = uploadedCoverUrl
-            // track.cover = cover // sorry..
-            if (uploadedCoverUrl) {
-              track.airtableData.image = [
-                {
-                  url: uploadedCoverUrl
-                }
-              ]
+              // cover.httpsCoverUrl = uploadedCoverUrl
+              // track.cover = cover // sorry..
+              if (uploadedCoverUrl) {
+                track.airtableData.image = [
+                  {
+                    url: uploadedCoverUrl
+                  }
+                ]
+              }
             }
-          }
 
-          uploadedTracks.push(track)
-          playlist.addSingleUploadedTrack(track)
-          notifyClient('trackUploaded', track)        }
+            uploadedTracks.push(track)
+            playlist.addSingleUploadedTrack(track)
+            notifyClient('trackUploaded', track)        }
+
+        // } catch (error) {
+        //     console.error(error) // hope
+        // }
       }
 
 
       // playlist.addMultipleUploadedTracks(uploadedTracks)
       // console.log('upt', playlist.getUploadedTracks()
+
+      // if (uploadedTracks.length === 0) {
+      //   cargoCallback()
+      // }
+
       try {
         await Uploader.uploadPlaylistToAirtable(uploadedTracks)
 
@@ -177,151 +240,32 @@ const createWindow = () => {
       cargoCallback()
     })
 
-
-
-    queue.push(items)
+    queue.push(newTracks)
   }, 10)
+
+  cargo.drain(() => {
+    console.log('All items in group have been processed');
+  });
 
   ipcMain.on('dragAndDrop', async (_event, folderPath: string) => {
 
     const files = fs.readdirSync(folderPath);
-
     const playlistHashTag = path.parse(folderPath).name
-
     const mp3Files = files.filter(file => {
       return path.extname(file) === '.mp3';
     });
-
     const localUrls = mp3Files.map(filename => path.resolve(folderPath, filename))
+    //   cargo.push(chunk)
 
-    // const alreadyUploadedTracks = playlist.getUploadedTracks()
-    const uniqueTrackFilenames = playlist.uniqueTrackFilenames
-
-    // remove already uploaded tracks
-    const newUrls = localUrls.filter(localUrl => {
-      const newFilename = path.parse(localUrl).base
-
-      const alreadyUploaded = uniqueTrackFilenames.find(filename => {
-        return filename === newFilename
-      })
-
-      return !alreadyUploaded
+    const data: DataToProcess = localUrls.map(url => {
+      return {
+        localUrl: url,
+        playlistHashTag: playlistHashTag
+      }
     })
 
-    if (newUrls.length === 0) {
-      // console.log('no unique tracks were added, so playlist remains the same')
-      console.log('all dropped files are already uploaded. exit')
-
-      return
-    }
-
-    // не идеально, но может сэкономить время
-    // нам нужно проверять, какие трэки у нас новые, а какие у нас уже есть
-    // те трэки, которые у нас уже есть, мы повторно не добавляем и не обрабатываем
-    //
-    // если мы закидываем сразу несколько плейлистов, они начинаются добавляться одновременно
-    // в идеале, у нас должна быть отдеальная очередь и на проверку трэков тоже
-    const newFilenames = newUrls.map(url => path.parse(url).base)
-    playlist.uniqueTrackFilenames.push(...newFilenames)
-
-    const newTracks: Track[] = await getTracksData(newUrls, playlistHashTag)
-    // const chunks1 = splitDataIntoChunks(newTracks)
-    // // for await (let chunk of chunks) {
-    // for await (const chunk of chunks1) {
-    //   await processFiles(chunk, audioProcessingOutputFolder)
-    // }
-
-
-    // processFiles(newTracks)
-
-    console.log('new tracks data:', newTracks)
-
-    // mainWindow.webContents.send('tracksData', newTracks)
-
-    playlist.addTracks(newTracks)
-    console.log('amount of tracks in playlist:', playlist.tracksAmount)
-    notifyClient('tracksAdded', newTracks)
-
-    // by now, tracks are filtered, and only unique tracks are added to the playlist
-    // mainWindow.webContents.send('playlistIsReadyToBeUploaded')
-    // console.log('sending a playlist..')
-    console.log(`sending unique ${newTracks.length === 1 ? 'track' : 'tracks'}..`)
-
-    // tracks = playlist.getTracks().filter()
-
-    // split those tracks into chunks (to bypass AT request limit)
-    // split by 10, because AT may get only 10 records per once
-    // const chunks = splitDataIntoChunks(newTracks, 2)
-    const chunks = splitDataIntoChunks(newTracks)
-    for (const chunk of chunks) {
-      // start processing a "chunk" of tracks
-      cargo.push(chunk)
-      // const modifiedTracks = await processFiles(chunk, audioProcessingOutputFolder)
-      //
-      // // console.log('chunk', chunk.cover)
-      // // await Uploader.uploadTracksToCloudflareR2(chunk)
-      // const uploadedTracks = []
-      // for await (const track of modifiedTracks) {
-      //   // add track duration
-      //   // do it here, because here audio file is already processed
-      //   track.airtableData.duration = track.processedFileDuration
-      //
-      //   // try to upload the track
-      //   // try to upload the cover
-      //
-      //   const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
-      //   if (uploadedTrackUrl) {
-      //     track.airtableData.trackUrl = uploadedTrackUrl
-      //     const cover = track.cover
-      //     // const hasCover = track.hasOwnProperty('cover')
-      //     if (cover) {
-      //       const trackname = track.trackname
-      //       const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
-      //
-      //       // cover.httpsCoverUrl = uploadedCoverUrl
-      //       // track.cover = cover // sorry..
-      //       if (uploadedCoverUrl) {
-      //         track.airtableData.image = [
-      //           {
-      //             url: uploadedCoverUrl
-      //           }
-      //         ]
-      //       }
-      //     }
-      //
-      //     uploadedTracks.push(track)
-      //     playlist.addSingleUploadedTrack(track)
-      //     notifyClient('trackUploaded', track)        }
-      // }
-      //
-      //
-      // // playlist.addMultipleUploadedTracks(uploadedTracks)
-      // // console.log('upt', playlist.getUploadedTracks()
-      // try {
-      //   await Uploader.uploadPlaylistToAirtable(uploadedTracks)
-      //
-      //   // if everything ok, remove tracks from output folder (delete them)
-      //   //   https://stackoverflow.com/a/42182416/9675926
-      //
-      //
-      //   const modifiedTracks = fs.readdirSync(audioProcessingOutputFolder);
-      //
-      //   modifiedTracks.forEach(file => {
-      //     const filePath = path.join(audioProcessingOutputFolder, file);
-      //
-      //     if (path.extname(file) === '.mp3') {
-      //       fs.unlinkSync(filePath);
-      //       console.log(`Deleted file: ${filePath}`);
-      //     }
-      //   });
-      // } catch (error) {
-      //   console.log(error)
-      // }
-      // console.log('pr:', track)
-    }
-
+    cargo.push(data)
   })
-
 
 
   // ipcMain.on('upload-playlist', (_event, playlistMetaData) =>{

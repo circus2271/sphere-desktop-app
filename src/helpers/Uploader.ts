@@ -8,17 +8,20 @@ export class Uploader {
 
     static async uploadTrackToCloudflareR2(track: Track): Promise<string | null> {
         try {
+            const fileBuffer = await fs.promises.readFile(track.processedFileLocalUrl as string)
+
+            const bucketPath = `musicLibrary/${track.filename}`
             await S3.send(
                 new PutObjectCommand({
                     Bucket: 'sphere-bucket',
-                    Key: track.filename,
+                    Key: bucketPath,
                     // Body: fs.createReadStream(track.filepath),
-                    Body: fs.createReadStream(track.processedFileLocalUrl as string),
+                    Body: fileBuffer,
                     ContentType: 'audio/mpeg'
                 })
             )
 
-            const uploadedTrackUrl = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/${encodeURI(track.filename)}`
+            const uploadedTrackUrl = `${CLOUDFLARE_R2_PUBLIC_ENDPOINT}/musicLibrary/${encodeURI(track.filename)}`
 
             console.log(`${track.filename} is uploaded to cloudflare`)
 
