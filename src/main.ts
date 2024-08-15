@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 
 import * as fs from 'fs';
-import {processFile, processFiles} from './helpers/audioProcessing';
+import {processFile} from './helpers/audioProcessing';
 
 import {getName} from './t';
 import {audioProcessingOutputFolder, getTracksData, splitDataIntoChunks} from './helpers/helpers';
@@ -123,7 +123,18 @@ const createWindow = () => {
         // try to upload the track
         // try to upload the cover
 
-        const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+
+        // try to upload a track (retry up to 5 times maximum)
+        let uploadedTrackUrl;
+        let uploaded = false
+        let attemptsCounter = 0
+        do {
+          uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
+          if (uploadedTrackUrl) uploaded = true
+          if (!uploaded) attemptsCounter++
+          // console.log('time (seconds)', new Date().getSeconds())
+        } while (!uploaded && attemptsCounter < 5)
+
         if (uploadedTrackUrl) {
           track.airtableData.trackUrl = uploadedTrackUrl
           const cover = track.cover
@@ -141,6 +152,8 @@ const createWindow = () => {
                 }
               ]
             }
+
+            delete track.cover
           }
 
           uploadedTracks.push(track)
