@@ -178,25 +178,18 @@ const createWindow = () => {
         // if everything ok, remove tracks from output folder (delete them)
         //   https://stackoverflow.com/a/42182416/9675926
 
-
+        // delete tracks from output folder
+        // delete only those tracks, that were processed in current track chunk
         const outputFolderFiles = fs.readdirSync(audioProcessingOutputFolder);
+        for (const uploadedTrack of uploadedTracks) {
+          // delete track if track is uploaded
+          if (outputFolderFiles.includes(uploadedTrack.filename)) {
+            const filePath = path.join(audioProcessingOutputFolder, uploadedTrack.filename);
 
-        outputFolderFiles.forEach(file => {
-          const filePath = path.join(audioProcessingOutputFolder, file);
-
-          if (path.extname(file) === '.mp3') {
-            // check if file is in current uploadedTracks chunk
-            // if file is uploaded, then delete it
-
-            const uploaded = uploadedTracks.find(track => track.filename === file)
-            if (uploaded) {
-              // delete file if file was uploaded
-              // if file wasn't uploaded or wasn't uploaded in current group of processed tracks, then do nothing
-              fs.unlinkSync(filePath);
-              console.log(`Deleted file: ${filePath}`);
-            }
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filePath}`);
           }
-        });
+        }
       } catch (error) {
         console.log(error)
       }
