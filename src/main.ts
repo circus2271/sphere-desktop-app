@@ -95,18 +95,25 @@ const createWindow = () => {
         console.error('error when trying to process track', track.trackname)
       }
       queueCallback()
-    }, 5) // process 5 items in parallel (maximum)
+    }, 10) // process 10 items in parallel (maximum)
+    // }, 5) // process 5 items in parallel (maximum)
 
     //when all items are processed
     // await queue.drain()
     queue.drain(async () => {
+      // if all tracks in portion are proceed,
+      // don't wait for tracks to upload,
+      // upload them immediately
+      // and also immediately start to process next track portion
+      cargoCallback()
+
       if (modifiedTracks.length === 0) {
         console.log('no tracks in this chunk are processed')
 
         // notify "library" that it may finish processing of this tracks chunk (portion of tracks)
         // after this callback, the library may start processing of another tracks portion
-        cargoCallback()
-        return
+        // cargoCallback()
+        // return
       }
       console.log('all items in portion are processed')
       console.log('processed items', modifiedTracks)
@@ -114,7 +121,7 @@ const createWindow = () => {
 
       // console.log('chunk', chunk.cover)
       // await Uploader.uploadTracksToCloudflareR2(chunk)
-      const uploadedTracks = []
+      const uploadedTracks: Track[] = []
       for await (const track of modifiedTracks) {
         // add track duration
         // do it here, because here audio file is already processed
@@ -129,6 +136,7 @@ const createWindow = () => {
         let uploaded = false
         let attemptsCounter = 0
         do {
+          if (attemptsCounter >= 1) console.log('trying to upload a track, attempt number is', attemptsCounter)
           uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
           if (uploadedTrackUrl) uploaded = true
           if (!uploaded) attemptsCounter++
@@ -177,8 +185,16 @@ const createWindow = () => {
           const filePath = path.join(audioProcessingOutputFolder, file);
 
           if (path.extname(file) === '.mp3') {
-            fs.unlinkSync(filePath);
-            console.log(`Deleted file: ${filePath}`);
+            // check if file is in current uploadedTracks chunk
+            // if file is uploaded, then delete it
+
+            const uploaded = uploadedTracks.find(track => track.filename === file)
+            if (uploaded) {
+              // delete file if file was uploaded
+              // if file wasn't uploaded or wasn't uploaded in current group of processed tracks, then do nothing
+              fs.unlinkSync(filePath);
+              console.log(`Deleted file: ${filePath}`);
+            }
           }
         });
       } catch (error) {
@@ -187,7 +203,7 @@ const createWindow = () => {
 
       // notify "library" that it may finish processing of this tracks chunk (portion of tracks)
       // after this callback, the library may start processing of another tracks portion
-      cargoCallback()
+      // cargoCallback()
     })
 
 
