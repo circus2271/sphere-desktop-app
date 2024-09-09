@@ -144,7 +144,7 @@ const createWindow = () => {
         } while (!uploaded && attemptsCounter < 5)
 
         if (uploadedTrackUrl) {
-          track.airtableData.trackUrl = uploadedTrackUrl
+          track.airtableData['Full link'] = uploadedTrackUrl
           const cover = track.cover
           // const hasCover = track.hasOwnProperty('cover')
           if (cover) {
