@@ -34,6 +34,6 @@ export interface AirtableData {
     }[], // image property is an array of objects
     // trackUrl?: string,
     'Full link'?: string,
-    duration?: string // added after file processing
+    'duration sec'?: string // added after file processing
     // uploadedTrackUrl: string
 }
