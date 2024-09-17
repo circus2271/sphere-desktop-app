@@ -5,15 +5,14 @@
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "dev": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit --watch",
     "dev1": "npm run typecheck && npm run start",
-    "dev": "tsc --noEmit --watch",
-    "update-start": "npm i && git pull && npm run start"
+    "update+start": "npm i && git pull && npm run start"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",

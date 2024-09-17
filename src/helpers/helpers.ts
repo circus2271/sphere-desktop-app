@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import {S3Client, S3ClientConfig,} from "@aws-sdk/client-s3";
-import {AirtableTrackItem, Track} from "./types";
+import {Track} from "./types";
 import {parseFile} from "music-metadata";
 import {IAudioMetadata} from "music-metadata/lib/type";
 import path from "path";
@@ -33,11 +33,12 @@ export const audioProcessingOutputFolder = path.join(__dirname, '../../output')
 
 console.log('audioProcessingOutputFolder', audioProcessingOutputFolder);
 
-export async function getTrackDuration(localUrl: string): Promise<string>   {
+export async function getTrackDuration(localUrl: string): Promise<number | null>   {
     const trackMetadata: IAudioMetadata = await parseFile(localUrl)
-    const duration = trackMetadata.format.duration?.toFixed() || ''
+    // const duration = trackMetadata.format.duration?.toFixed() || ''
+    const duration = trackMetadata.format.duration
 
-    return duration
+    return typeof duration === 'number' ? Math.floor(duration) : null
 }
 
 // function returns promise and a track array inside that promise

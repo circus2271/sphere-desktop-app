@@ -1,4 +1,4 @@
-import {AirtableTrackItem, Cover, Track} from "./types";
+import {Cover, Track} from "./types";
 import {airtableUrl, CLOUDFLARE_R2_PUBLIC_ENDPOINT, PERSONAL_ACCESS_TOKEN, S3} from "./helpers";
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import fs from "fs";

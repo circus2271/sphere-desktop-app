@@ -125,7 +125,11 @@ const createWindow = () => {
       for await (const track of modifiedTracks) {
         // add track duration
         // do it here, because here audio file is already processed
-        track.airtableData['duration sec'] = track.processedFileDuration
+        const trackDuration = track.processedFileDuration
+        // don't add this to airtableData if couldn't parse duration from a file
+        if  (trackDuration) {
+          track.airtableData['duration sec'] = trackDuration
+        }
 
         // try to upload the track
         // try to upload the cover
