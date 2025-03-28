@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 // const {Track} = require("./helpers/types");
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    changeMode: (shouldSendFiles) => ipcRenderer.send('modeChanged', shouldSendFiles),
     // sendFilePaths: (data) => ipcRenderer.send('dragAndDrop', data),
     sendFolderPath: (folderPath) => ipcRenderer.send('dragAndDrop', folderPath),
     onTracksDataRecieve: (callback) => ipcRenderer.on('tracksData', (_event, tracksData) => callback(tracksData)),

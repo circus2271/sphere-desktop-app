@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import {processFile} from './helpers/audioProcessing';
 
 import {getName} from './t';
-import {audioProcessingOutputFolder, getTracksData, splitDataIntoChunks} from './helpers/helpers';
+import {audioProcessingOutputFolder, getTracksData, mode, splitDataIntoChunks} from './helpers/helpers';
 import {Uploader} from "./helpers/Uploader";
 import {Playlist} from "./helpers/Playlist";
 import {Track} from "./helpers/types";
@@ -26,6 +26,9 @@ const createWindow = () => {
     },
   });
 
+  ipcMain.on('modeChanged', async (_event, shouldSendFiles) => {
+    mode.sendFiles = shouldSendFiles
+  })
 
   const playlist = new Playlist()
 
@@ -117,6 +120,13 @@ const createWindow = () => {
       }
       console.log('all items in portion are processed')
       console.log('processed items', modifiedTracks)
+
+
+      if (!mode.sendFiles) {
+        console.warn('tracks are processed, but current mode doesn\'t send files to AT and cloudflare')
+        return
+      }
+
       // cargoCallback() // start processing new portions of items (if any in cargo)
 
       // console.log('chunk', chunk.cover)

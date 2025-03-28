@@ -13,6 +13,29 @@ console.log('👋 This message is being logged by "renderer.js", included via Vi
 //     sendButton.disabled = false;
 // });
 
+// use it as follows:
+// (just type it to the console and it should change mode (and not to/ or send files to AT and cloudlare))
+// window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: true } } } ) )
+// window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: false } } } ) )
+window.addEventListener('modeChanged', e => {
+    const { sendFiles } = e.detail.mode
+
+
+    if (typeof sendFiles === 'boolean') {
+        console.log('mode should be changed')
+        console.log(sendFiles === true ?
+            'now files are supposed to be uploaded to AT and cloudflare'
+            : 'now files are not supposed to be uploaded'
+        )
+
+        window.electronAPI.changeMode(sendFiles)
+    } else {
+        console.log('"sendFiles" property supposed to be of type "boolean"')
+        console.log('hence, mode stays the same, and remains yet unchanged')
+    }
+
+})
+
 const htmlConsole = document.querySelector('#js-console');
 const tracksCounter = document.querySelector('#js-track-count-summary');
 

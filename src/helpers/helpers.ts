@@ -26,6 +26,10 @@ export const S3 = new S3Client({
     },
 } as S3ClientConfig);
 
+export const mode = {
+    sendFiles: true, // if true, sends files to AT and cloudflare; if false, just saves processed files on disk and doesn't send them (and doesn't delete them)
+}
+
 export const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${FIRST_TABLE_ID}`
 
 
