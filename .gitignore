@@ -1,5 +1,9 @@
 #output/*.mp3
 *.mp3
+yandex-mirror-tracks.json
+cloudflare-tracks.json
+diff-tracks.json
+
 
 # Logs
 logs
@@ -93,3 +97,4 @@ typings/
 
 # Electron-Forge
 out/
+
