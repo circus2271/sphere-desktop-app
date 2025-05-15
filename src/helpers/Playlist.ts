@@ -1,10 +1,24 @@
 import {Track} from "./types";
 
+
+class YandexMirrorStore {
+    private mirroredTracks: Track[] = []
+
+    get mirroredTracksAmount() {
+        return this.mirroredTracks.length
+    }
+
+    addNewAlreadyMirroredTracks(tracks: Track[]) {
+        this.mirroredTracks.push(...tracks)
+    }
+
+}
+
 export class Playlist {
     private tracks: Track[] = []
     private uploadedTracks: Track[] = []
     uniqueTrackFilenames: string[] = []
-
+    yandexMirrorStore = new YandexMirrorStore()
 
     addMultipleUploadedTracks(tracks: Track[]) {
         this.uploadedTracks.push(...tracks)

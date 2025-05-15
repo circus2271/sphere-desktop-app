@@ -23,6 +23,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteAPlaylist: () => ipcRenderer.send('deleteAPlaylist'),
 
 
-
+    newTracksMirrored: (callback) => {ipcRenderer.on('notifyClient:newTracksAreMirrored', (_event, mirroredTracksAmount) => callback(mirroredTracksAmount))}
 })
 

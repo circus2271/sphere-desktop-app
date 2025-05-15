@@ -1,5 +1,5 @@
 import {Cover, Track} from "./types";
-import {airtableUrl, CLOUDFLARE_R2_PUBLIC_ENDPOINT, PERSONAL_ACCESS_TOKEN, S3} from "./helpers";
+import {airtableUrl, CLOUDFLARE_R2_PUBLIC_ENDPOINT, cloudflareWorkerUrl, PERSONAL_ACCESS_TOKEN, S3, PASSWORD_FOR_CLOUDFLARE} from "./helpers";
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import fs from "fs";
 import axios, {AxiosError} from "axios";
@@ -88,6 +88,33 @@ export class Uploader {
             return response
         } catch(error) {
           console.log(`couldn't upload tracks to AT`)
+
+            if (error instanceof AxiosError) {
+                const response = error.response
+                if (response) {
+                    console.log(response.status)
+                    console.log(response.statusText)
+                }
+            } else {
+                console.log(error)
+            }
+        }
+    }
+
+    // and cloudflare worker will download them from cloudflare r2 and send them to yandex cloud
+    static async sendPlaylistToACloudflareWorker(tracks: Track[]) {
+        const urls = tracks.map(track => track.airtableData['Full link'])
+
+        try {
+            const response = axios.post(cloudflareWorkerUrl, urls, {
+                headers: {
+                    password: PASSWORD_FOR_CLOUDFLARE // maybe not the best possible option to protect this api route...
+                }
+            })
+
+            return response
+        } catch(error) {
+            console.log(`some error when sending tracks through cloudflare`)
 
             if (error instanceof AxiosError) {
                 const response = error.response

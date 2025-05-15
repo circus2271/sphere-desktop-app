@@ -76,6 +76,13 @@ window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => {
     addToHTMLConsole(html);
 });
 
+const mirroredTracksInfoDomNode = document.querySelector('#js-mirrored-track-info')
+window.electronAPI.newTracksMirrored((mirroredTracksAmount) => {
+    mirroredTracksInfoDomNode.innerHTML = `
+      ${mirroredTracksAmount} ${mirroredTracksAmount === 1 `track is` ? `tracks are`} mirrored
+    `
+})
+
 const deletePlaylistButton = document.querySelector('#js-delete-local-playlist');
 if (deletePlaylistButton) {
     deletePlaylistButton.onclick = () => {

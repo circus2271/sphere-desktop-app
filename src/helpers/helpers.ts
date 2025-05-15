@@ -13,7 +13,9 @@ export const {
     ACCESS_KEY_ID,
     SECRET_ACCESS_KEY,
     ACCOUNT_ID,
-    CLOUDFLARE_R2_PUBLIC_ENDPOINT
+    CLOUDFLARE_R2_PUBLIC_ENDPOINT,
+    // passwordForCloudflare,
+    PASSWORD_FOR_CLOUDFLARE,
 } = process.env
 
 
@@ -31,7 +33,7 @@ export const mode = {
 }
 
 export const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${FIRST_TABLE_ID}`
-
+export const cloudflareWorkerUrl = `https://`
 
 export const audioProcessingOutputFolder = path.join(__dirname, '../../output')
 

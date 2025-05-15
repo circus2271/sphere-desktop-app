@@ -54,7 +54,7 @@ const createWindow = () => {
     notifyClient('localPlaylistDeleted')
   })
 
-  type notificationType = 'tracksAdded' | 'localPlaylistDeleted' | 'trackUploaded'
+  type notificationType = 'tracksAdded' | 'localPlaylistDeleted' | 'trackUploaded' | 'new tracks are mirrored'
   // const notification = {
   //
   // }
@@ -75,8 +75,15 @@ const createWindow = () => {
       mainWindow.webContents.send('notifyClient:trackUploaded', {
         uploadedTrack: data,
         // newlyUploadedTracksCount: (data as Track[]).length,
-        allUploadedTrackCount: playlist.uploadedTracksAmount})
+        allUploadedTrackCount: playlist.uploadedTracksAmount
+      })
     }
+
+    if (notificationType === 'new tracks are mirrored') {
+      const mirroredTracksAmount = playlist.yandexMirrorStore.mirroredTracksAmount
+      mainWindow.webContents.send('notifyClient:newTracksAreMirrored', mirroredTracksAmount)
+    }
+
     if (notificationType === 'localPlaylistDeleted') {
       mainWindow.webContents.send('notifyClient:localPlaylistWasDeleted')
     }
@@ -188,6 +195,13 @@ const createWindow = () => {
       // console.log('upt', playlist.getUploadedTracks()
       try {
         await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+        Uploader.sendPlaylistToACloudflareWorker(uploadedTracks)
+            .then(response => {
+              if (response.ok) {
+                playlist.yandexMirrorStore.addNewAlreadyMirroredTracks(uploadedTracks)
+                notifyClient('new tracks are mirrored')
+              }
+            })
 
         // if everything ok, remove tracks from output folder (delete them)
         //   https://stackoverflow.com/a/42182416/9675926
