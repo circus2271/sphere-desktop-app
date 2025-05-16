@@ -1,3 +1,11 @@
+## hacks
+paste this to a console to active hidden mode
+window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: false } } } ) )
+
+paste this to turn this app back to normal
+window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: true } } } ) )
+
+
 ## программа содуржит несколько сущностей
 
 в том числе

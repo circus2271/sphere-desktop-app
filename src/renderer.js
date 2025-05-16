@@ -18,8 +18,14 @@ console.log('👋 This message is being logged by "renderer.js", included via Vi
 // window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: true } } } ) )
 // window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: { sendFiles: false } } } ) )
 window.addEventListener('modeChanged', e => {
-    const { sendFiles } = e.detail.mode
+    const { sendFiles, shouldSendOnlyToS3 } = e.detail.mode
 
+    if (shouldSendOnlyToS3) {
+        window.electronAPI.changeMode(shouldSendOnlyToS3)
+        console.log('files will only be uploaded to yandex and cloudflare')
+
+        return
+    }
 
     if (typeof sendFiles === 'boolean') {
         console.log('mode should be changed')
@@ -76,6 +82,20 @@ window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => {
     addToHTMLConsole(html);
 });
 
+
+const synchronizationErrors = document.querySelector('#synchronization-errors')
+window.electronAPI.trackIsNotSynchronized((notMirroredTracksAmount) => {
+    if (notMirroredTracksAmount) {
+        synchronizationErrors.classList.add('visible')
+    }
+
+    synchronizationErrors.innerHTML = `
+      ${notMirroredTracksAmount === 1 ? 
+        '1 track is not mirrored properly' : 
+        `${notMirroredTracksAmount} tracks are not mirrored properly`}
+    `
+});
+
 const deletePlaylistButton = document.querySelector('#js-delete-local-playlist');
 if (deletePlaylistButton) {
     deletePlaylistButton.onclick = () => {
@@ -83,8 +103,14 @@ if (deletePlaylistButton) {
     };
 }
 
-const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
-window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
+// const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
+// const uploadedToYandexCou
+const counters = {
+    uploadedToYandex: document.querySelector('#yandex-counter'),
+    uploadedToCloudflare: document.querySelector('#cloudflare-counter')
+}
+// window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
+window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => {
     const uploadedData = uploadedTrack.airtableData
 
 
@@ -99,16 +125,22 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => 
 
     const html = `
       <li class="console-item">
-        track was uploaded
         track info:
         filename: ${filename} 
         duration: ${duration}
         ${coverHTML}
       </li>
     `;
-    uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
-        `1 track is uploaded` :
-        `${allUploadedTrackCount} tracks are uploaded`;
+    // uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
+    //     `1 track is uploaded` :
+    //     `${allUploadedTrackCount} tracks are uploaded`;
+    counters.uploadedToYandex.innerHTML = uploadedTracksCounter.uploadedToYandex === 1 ?
+        `1 track is uploaded to yandex` :
+        `${uploadedTracksCounter.uploadedToYandex} tracks are uploaded to yandex`
+
+    counters.uploadedToCloudflare.innerHTML = uploadedTracksCounter.uploadedToCloudflare === 1 ?
+        `1 track is uploaded to cloudflare` :
+        `${uploadedTracksCounter.uploadedToCloudflare} tracks are uploaded to cloudflare`
 
     // deletePlaylistButton.disabled = false;
     addToHTMLConsole(html);

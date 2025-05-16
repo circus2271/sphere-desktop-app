@@ -1,10 +1,23 @@
-import {Track} from "./types";
+import {Track} from './types';
 
 export class Playlist {
     private tracks: Track[] = []
     private uploadedTracks: Track[] = []
     uniqueTrackFilenames: string[] = []
 
+    // dummy implementation of this feature
+    // notUploadedTracks: Track[] = []
+    // unsynchronizedTracks: Track[] = []
+    notSynchronizedTracks: Track[] = []
+
+
+    get uploadedToYandex() {
+        return this.tracks.filter(track => track.uploadedToYandexObjectStorage)
+    }
+
+    get uploadedToCloudflare() {
+        return this.tracks.filter(track => track.uploadedToCloudflare)
+    }
 
     addMultipleUploadedTracks(tracks: Track[]) {
         this.uploadedTracks.push(...tracks)

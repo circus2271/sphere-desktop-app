@@ -6,10 +6,10 @@ import {processFile} from './helpers/audioProcessing';
 
 import {getName} from './t';
 import {audioProcessingOutputFolder, getTracksData, mode, splitDataIntoChunks} from './helpers/helpers';
-import {Uploader} from "./helpers/Uploader";
-import {Playlist} from "./helpers/Playlist";
-import {Track} from "./helpers/types";
-import async from "async";
+import {Uploader} from './helpers/Uploader';
+import {Playlist} from './helpers/Playlist';
+import {Track} from './helpers/types';
+import async from 'async';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -26,8 +26,9 @@ const createWindow = () => {
     },
   });
 
-  ipcMain.on('modeChanged', async (_event, shouldSendFiles) => {
+  ipcMain.on('modeChanged', async (_event, shouldSendFiles, shouldSendOnlyToS3) => {
     mode.sendFiles = shouldSendFiles
+    mode.sendFilesOnlyToCloudflareAndYandex = shouldSendOnlyToS3
   })
 
   const playlist = new Playlist()
@@ -54,7 +55,7 @@ const createWindow = () => {
     notifyClient('localPlaylistDeleted')
   })
 
-  type notificationType = 'tracksAdded' | 'localPlaylistDeleted' | 'trackUploaded'
+  type notificationType = 'tracksAdded' | 'localPlaylistDeleted' | 'trackUploaded' | 'couldntSynchronizeTrack'
   // const notification = {
   //
   // }
@@ -67,16 +68,26 @@ const createWindow = () => {
     }
 
     if (notificationType === 'trackUploaded') {
-      // if (Array.isArray(data)) {
-      // // if (data instanceof Array) {
-      //   console.error('notifyClient: wrong data parameter provided. it should be track object instead of array of tracks')
-      // }
 
       mainWindow.webContents.send('notifyClient:trackUploaded', {
         uploadedTrack: data,
         // newlyUploadedTracksCount: (data as Track[]).length,
-        allUploadedTrackCount: playlist.uploadedTracksAmount})
+        // allUploadedTrackCount: playlist.uploadedTracksAmount,
+        // uploadedToYandex: playlist.uploadedToYandex.length,
+        // uploadedToCloudflare: playlist.uploadedToCloudflare.length
+        uploadedTracksCounter: {
+          uploadedToYandex: playlist.uploadedToYandex.length,
+          uploadedToCloudflare: playlist.uploadedToCloudflare.length
+        }
+      })
     }
+
+    // ...
+    if (notificationType === 'couldntSynchronizeTrack') {
+      // console.log('le',  playlist.notSynchronizedTracks.length)
+      mainWindow.webContents.send('notifyClient:couldntSynchronizeTrack', playlist.notSynchronizedTracks.length)
+    }
+
     if (notificationType === 'localPlaylistDeleted') {
       mainWindow.webContents.send('notifyClient:localPlaylistWasDeleted')
     }
@@ -118,8 +129,11 @@ const createWindow = () => {
         // cargoCallback()
         // return
       }
-      console.log('all items in portion are processed')
-      console.log('processed items', modifiedTracks)
+      console.log('\nall items in portion are processed')
+      // console.log('processed items', modifiedTracks)
+      console.log('processed items amount:', modifiedTracks.length)
+      // console.log('\n')
+      console.log('')
 
 
       if (!mode.sendFiles) {
@@ -127,11 +141,9 @@ const createWindow = () => {
         return
       }
 
-      // cargoCallback() // start processing new portions of items (if any in cargo)
 
-      // console.log('chunk', chunk.cover)
-      // await Uploader.uploadTracksToCloudflareR2(chunk)
       const uploadedTracks: Track[] = []
+
       for await (const track of modifiedTracks) {
         // add track duration
         // do it here, because here audio file is already processed
@@ -146,27 +158,36 @@ const createWindow = () => {
 
 
         // try to upload a track (retry up to 5 times maximum)
-        let uploadedTrackUrl;
+        // let uploadedTrackUrl;
+        let cloudflareUrl, yandexUrl;
         let uploaded = false
         let attemptsCounter = 0
         do {
           if (attemptsCounter >= 1) console.log('trying to upload a track, attempt number is', attemptsCounter)
-          uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
-          if (uploadedTrackUrl) uploaded = true
+          // yandex comes first, because logs for uploading a track and a cover to cloudflare will go together
+          if (!yandexUrl) {
+            yandexUrl = await Uploader.uploadTrackToYandexObjectStorage(track)
+          }
+          if (!cloudflareUrl) {
+            cloudflareUrl = await Uploader.uploadTrackToCloudflareR2(track)
+          }
+          if (cloudflareUrl && yandexUrl) uploaded = true
           if (!uploaded) attemptsCounter++
           // console.log('time (seconds)', new Date().getSeconds())
         } while (!uploaded && attemptsCounter < 5)
 
-        if (uploadedTrackUrl) {
-          track.airtableData['Full link'] = uploadedTrackUrl
+        // console.log('cl', cloudflareUrl)
+        // console.log('y', yandexUrl)
+
+
+        if (cloudflareUrl) {
+          track.airtableData['Full link'] = cloudflareUrl
           const cover = track.cover
-          // const hasCover = track.hasOwnProperty('cover')
+
           if (cover) {
             const trackname = track.trackname
             const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
 
-            // cover.httpsCoverUrl = uploadedCoverUrl
-            // track.cover = cover // sorry..
             if (uploadedCoverUrl) {
               track.airtableData.image = [
                 {
@@ -178,16 +199,27 @@ const createWindow = () => {
             delete track.cover
           }
 
-          uploadedTracks.push(track)
-          playlist.addSingleUploadedTrack(track)
-          notifyClient('trackUploaded', track)        }
+          track.uploadedToCloudflare = true
+        }
+
+        if (yandexUrl) {
+
+          track.uploadedToYandexObjectStorage = true
+        }
+
+        console.log('') // for empty line
+        uploadedTracks.push(track)
+        playlist.addSingleUploadedTrack(track)
+        notifyClient('trackUploaded', track)
+
       }
 
 
-      // playlist.addMultipleUploadedTracks(uploadedTracks)
-      // console.log('upt', playlist.getUploadedTracks()
       try {
-        await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+        if (!mode.sendFilesOnlyToCloudflareAndYandex) {
+
+          await Uploader.uploadPlaylistToAirtable(uploadedTracks)
+        }
 
         // if everything ok, remove tracks from output folder (delete them)
         //   https://stackoverflow.com/a/42182416/9675926
@@ -197,6 +229,18 @@ const createWindow = () => {
         const outputFolderFiles = fs.readdirSync(audioProcessingOutputFolder);
         for (const uploadedTrack of uploadedTracks) {
           // delete track if track is uploaded
+          // if (uploadedTrack.uploadedToCloudflare && uploadedTrack.uploadedToYandexObjectStorage) {
+          if (!uploadedTrack.uploadedToCloudflare || !uploadedTrack.uploadedToYandexObjectStorage) {
+            // track is not uploaded, so don't delete it from output folder
+
+            playlist.notSynchronizedTracks.push(uploadedTrack)
+            // notifyClient('couldSynchronizeTrack', uploadedTrack)
+            notifyClient('couldntSynchronizeTrack')
+
+            // return
+            continue
+          }
+
           if (outputFolderFiles.includes(uploadedTrack.filename)) {
             const filePath = path.join(audioProcessingOutputFolder, uploadedTrack.filename);
 
@@ -292,68 +336,6 @@ const createWindow = () => {
     for (const chunk of chunks) {
       // start processing a "chunk" of tracks
       cargo.push(chunk)
-      // const modifiedTracks = await processFiles(chunk, audioProcessingOutputFolder)
-      //
-      // // console.log('chunk', chunk.cover)
-      // // await Uploader.uploadTracksToCloudflareR2(chunk)
-      // const uploadedTracks = []
-      // for await (const track of modifiedTracks) {
-      //   // add track duration
-      //   // do it here, because here audio file is already processed
-      //   track.airtableData.duration = track.processedFileDuration
-      //
-      //   // try to upload the track
-      //   // try to upload the cover
-      //
-      //   const uploadedTrackUrl = await Uploader.uploadTrackToCloudflareR2(track)
-      //   if (uploadedTrackUrl) {
-      //     track.airtableData.trackUrl = uploadedTrackUrl
-      //     const cover = track.cover
-      //     // const hasCover = track.hasOwnProperty('cover')
-      //     if (cover) {
-      //       const trackname = track.trackname
-      //       const uploadedCoverUrl = await Uploader.uploadTrackCoverToCloudflareR2(cover, trackname)
-      //
-      //       // cover.httpsCoverUrl = uploadedCoverUrl
-      //       // track.cover = cover // sorry..
-      //       if (uploadedCoverUrl) {
-      //         track.airtableData.image = [
-      //           {
-      //             url: uploadedCoverUrl
-      //           }
-      //         ]
-      //       }
-      //     }
-      //
-      //     uploadedTracks.push(track)
-      //     playlist.addSingleUploadedTrack(track)
-      //     notifyClient('trackUploaded', track)        }
-      // }
-      //
-      //
-      // // playlist.addMultipleUploadedTracks(uploadedTracks)
-      // // console.log('upt', playlist.getUploadedTracks()
-      // try {
-      //   await Uploader.uploadPlaylistToAirtable(uploadedTracks)
-      //
-      //   // if everything ok, remove tracks from output folder (delete them)
-      //   //   https://stackoverflow.com/a/42182416/9675926
-      //
-      //
-      //   const modifiedTracks = fs.readdirSync(audioProcessingOutputFolder);
-      //
-      //   modifiedTracks.forEach(file => {
-      //     const filePath = path.join(audioProcessingOutputFolder, file);
-      //
-      //     if (path.extname(file) === '.mp3') {
-      //       fs.unlinkSync(filePath);
-      //       console.log(`Deleted file: ${filePath}`);
-      //     }
-      //   });
-      // } catch (error) {
-      //   console.log(error)
-      // }
-      // console.log('pr:', track)
     }
 
   })

@@ -19,6 +19,8 @@ export interface Track {
     processedFileLocalUrl?: string,
     // processedFileDuration?: string,
     processedFileDuration?: number,
+    uploadedToYandexObjectStorage: boolean,
+    uploadedToCloudflare: boolean,
 
     airtableData: AirtableData
 }

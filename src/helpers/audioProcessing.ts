@@ -1,16 +1,9 @@
-// const fs = require('fs');
-// const path = require('path');
-// const ffmpeg = require('fluent-ffmpeg');
-// const ffmpegPath = require('ffmpeg-static');
-// const ffprobePath = require('ffprobe-static').path;
-// const async = require('async');
-
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import {path as ffprobePath} from 'ffprobe-static';
-import {Track} from "./types";
-import {audioProcessingOutputFolder, getTrackDuration} from "./helpers";
+import {Track} from './types';
+import {audioProcessingOutputFolder, getTrackDuration} from './helpers';
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -151,7 +144,7 @@ export const processFile = (track: Track, outputPath: string): Promise<Track> =>
 //
 //
 //     // start processing items.
-//     // no error handling here, because this is done in ffmpeg "code chain" above
+//     // no error handling here, because this is done in ffmpeg 'code chain' above
 //     queue.push(mp3Files)
 //
 //

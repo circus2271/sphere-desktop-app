@@ -93,3 +93,25 @@ button {
     padding-top: .5rem;
   }
 }
+
+.synchronization-errors {
+  width: fit-content;
+  margin-bottom: 1.75rem;
+
+  display: none;
+
+  &::after {
+    border-bottom-style: solid;
+    //border-bottom-width: 9px;
+    border-bottom-width: 8px;
+    border-bottom-color: orangered;
+    content: '';
+    display: block;
+    position: relative;
+    bottom: -.25rem;
+  }
+
+  &.visible {
+    display: block;
+  }
+}
