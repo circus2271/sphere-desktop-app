@@ -96,7 +96,8 @@ button {
 
 .synchronization-errors {
   width: fit-content;
-  margin-bottom: 1.75rem;
+  //margin-bottom: 1.75rem;
+  margin-bottom: 1.8rem;
 
   display: none;
 
@@ -114,4 +115,15 @@ button {
   &.visible {
     display: block;
   }
+}
+
+.uploaded-info-summary {
+  margin-top: 1.1rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  //&.visible {
+  //}
 }

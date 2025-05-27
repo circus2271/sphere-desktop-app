@@ -106,6 +106,7 @@ if (deletePlaylistButton) {
 // const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
 // const uploadedToYandexCou
 const counters = {
+    wrapper: document.querySelector('#js-uploaded-tracks-info'),
     uploadedToYandex: document.querySelector('#yandex-counter'),
     uploadedToCloudflare: document.querySelector('#cloudflare-counter')
 }
@@ -113,7 +114,7 @@ const counters = {
 window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => {
     const uploadedData = uploadedTrack.airtableData
 
-
+// debugger
     // if there is an image, get that image url
     const trackCover = uploadedTrack.airtableData.image && uploadedTrack.airtableData.image[0].url
     const {filename} = uploadedTrack;
@@ -131,16 +132,23 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => 
         ${coverHTML}
       </li>
     `;
+
+    // ...
+    // if (counters.uploadedToYandex && counters.uploadedToCloudflare) {
+    //     counters.wrapper.classList.add('visible')
+    // }
+
+
     // uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
     //     `1 track is uploaded` :
     //     `${allUploadedTrackCount} tracks are uploaded`;
     counters.uploadedToYandex.innerHTML = uploadedTracksCounter.uploadedToYandex === 1 ?
-        `1 track is uploaded to yandex` :
-        `${uploadedTracksCounter.uploadedToYandex} tracks are uploaded to yandex`
+        `&nbsp;&nbsp;> 1 track is uploaded to yandex` :
+        `&nbsp;&nbsp;> ${uploadedTracksCounter.uploadedToYandex} tracks are uploaded to yandex`
 
     counters.uploadedToCloudflare.innerHTML = uploadedTracksCounter.uploadedToCloudflare === 1 ?
-        `1 track is uploaded to cloudflare` :
-        `${uploadedTracksCounter.uploadedToCloudflare} tracks are uploaded to cloudflare`
+        `&nbsp;&nbsp;> 1 track is uploaded to cloudflare` :
+        `&nbsp;&nbsp;> ${uploadedTracksCounter.uploadedToCloudflare} tracks are uploaded to cloudflare`
 
     // deletePlaylistButton.disabled = false;
     addToHTMLConsole(html);
