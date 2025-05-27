@@ -33,9 +33,9 @@
     <div class="track-count-summary" id="js-track-count-summary" data-current-count="0">
 <!--      there are <span id="js-added-tracks-counter">10</span> tracks-->
 <!--      1 track is added to the playlist-->
-      0 tracks are added to the playlist
+<!--      0 tracks are added to the playlist-->
     </div>
-    <div class="uploaded-info-summary" id="js-uploaded-tracks-info">
+    <div class="uploaded-info-summary hidden" id="js-uploaded-tracks-info">
       <div class="yandex" id="yandex-counter">
         &nbsp;&nbsp;> 0 tracks are uploaded to yandex
       </div>
@@ -46,7 +46,11 @@
       <!--      7 tracks of 10 are uploaded-->
     </div>
   </div>
-  <div class="console-wrapper">
+  <div class="console-wrapper" style="margin-top: 1.5rem;">
+    <div hidden id="js-logs-header">
+<!--        logs:-->
+        and now for something completely different
+    </div>
     <ul id="js-console">
 
 <!--      <li class="console-item">-->

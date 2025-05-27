@@ -50,6 +50,8 @@ const addToHTMLConsole = (html) => {
 };
 
 const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPlaylist}) => {
+    document.querySelector('#js-logs-header').removeAttribute('hidden')
+
     if (action === 'add') {
         const currentCount = +tracksCounter.getAttribute('data-current-count');
         const updatedCount = currentCount + numberOfNewTracks;
@@ -134,9 +136,10 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => 
     `;
 
     // ...
-    // if (counters.uploadedToYandex && counters.uploadedToCloudflare) {
-    //     counters.wrapper.classList.add('visible')
-    // }
+    if (counters.uploadedToYandex || counters.uploadedToCloudflare) {
+        // counters.wrapper.removeAttribute('hidden')
+        counters.wrapper.classList.remove('hidden')
+    }
 
 
     // uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?

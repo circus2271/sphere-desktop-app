@@ -45,8 +45,10 @@ export const yandexS3Client = new S3Client({
 export const mode = {
     sendFiles: true, // if true, sends files to AT and cloudflare; if false, just saves processed files on disk and doesn't send them (and doesn't delete them)
     sendFilesOnlyToCloudflareAndYandex: false,
+    showBrowserDevtools: false,
+
     // sendFilesOnlyToCloudflareAndYandex: true,
-    // showBrowserDevtools: false,
+    // showBrowserDevtools: true,
 }
 
 export const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${FIRST_TABLE_ID}`
