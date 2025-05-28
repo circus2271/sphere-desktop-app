@@ -84,13 +84,54 @@ button {
   }
 }
 
+@mixin animateAppearance {
+  opacity: 0;
+
+  &.visible {
+    transition: opacity .5s;
+    opacity: 1;
+  }
+}
+
+.logs-header,
+.track-count-summary,
+.uploaded-info-summary,
+.synchronization-errors {
+  @include animateAppearance();
+}
+
+@keyframes animateAppearance {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale {
+  from {
+    transform: scale(.75);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
 
 .console-item {
-  //color: #fff;
+  animation: animateAppearance .5s;
+
 
   img.cover {
     width: 100px;
     padding-top: .5rem;
+
+    //animation: animateAppearance .5s, scale .4s;
+    //animation: animateAppearance .5s, scale .7s;
+    //animation: animateAppearance .5s, scale .5s;
+    animation: animateAppearance .5s;
   }
 }
 
@@ -124,11 +165,4 @@ button {
   display: flex;
   flex-direction: column;
   gap: .5rem;
-
-  //&.visible {
-  //}
-
-  &.hidden {
-    display: none;
-  }
 }

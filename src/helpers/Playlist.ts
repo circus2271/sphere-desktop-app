@@ -11,6 +11,13 @@ export class Playlist {
     notSynchronizedTracks: Track[] = []
 
 
+    reset() {
+        this.tracks = []
+        this.uploadedTracks = []
+        this.uniqueTrackFilenames = []
+        this.notSynchronizedTracks = []
+    }
+
     get uploadedToYandex() {
         return this.tracks.filter(track => track.uploadedToYandexObjectStorage)
     }

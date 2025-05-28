@@ -42,20 +42,29 @@ window.addEventListener('modeChanged', e => {
 
 })
 
+
 const htmlConsole = document.querySelector('#js-console');
 const tracksCounter = document.querySelector('#js-track-count-summary');
 
-const addToHTMLConsole = (html) => {
+const addToHTMLConsole = (html, element = null) => {
+    if (element) {
+        htmlConsole.appendChild(element)
+
+        return
+    }
+
     htmlConsole.innerHTML += html;
 };
 
 const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPlaylist}) => {
-    document.querySelector('#js-logs-header').removeAttribute('hidden')
+    // document.querySelector('#js-logs-header').removeAttribute('hidden')
+    document.querySelector('#js-logs-header').classList.add('visible')
 
     if (action === 'add') {
         const currentCount = +tracksCounter.getAttribute('data-current-count');
         const updatedCount = currentCount + numberOfNewTracks;
 
+        tracksCounter.classList.add('visible')
         tracksCounter.innerHTML = updatedCount === 1 ?
             'there is 1 track in a playlist' :
             `there are ${updatedCount} tracks in a playlist`;
@@ -73,15 +82,21 @@ const updateTracksCounter = ({action, numberOfNewTracks, numberOfAllTracksInAPla
 window.electronAPI.tracksAddedToAPlaylist(({addedTracks: tracks}) => {
     const onlyOneTrack = tracks.length === 1;
 
-    const html = `
-      <li class="console-item">
-        ${onlyOneTrack ? '1 track is added' : tracks.length + ' tracks are added'}
+    // const html = `
+    //   <li class="console-item">
+    //     ${onlyOneTrack ? '1 track is added' : tracks.length + ' tracks are added'}
+    //     to the playlist
+    //   </li>
+    // `;
+    const listItem = document.createElement('li')
+    listItem.classList.add('console-item')
+    listItem.innerHTML = `
+      ${onlyOneTrack ? '1 track is added' : tracks.length + ' tracks are added'}
         to the playlist
-      </li>
-    `;
+      `
 
     updateTracksCounter({action: 'add', numberOfNewTracks: tracks.length});
-    addToHTMLConsole(html);
+    addToHTMLConsole(null, listItem);
 });
 
 
@@ -105,6 +120,7 @@ if (deletePlaylistButton) {
     };
 }
 
+
 // const uploadedTracksCounter = document.querySelector('#js-uploaded-tracks-info');
 // const uploadedToYandexCou
 const counters = {
@@ -112,8 +128,11 @@ const counters = {
     uploadedToYandex: document.querySelector('#yandex-counter'),
     uploadedToCloudflare: document.querySelector('#cloudflare-counter')
 }
+
+
 // window.electronAPI.trackWasUploaded(({uploadedTrack, allUploadedTrackCount}) => {
 window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => {
+
     const uploadedData = uploadedTrack.airtableData
 
 // debugger
@@ -126,25 +145,28 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => 
         `track cover: <img class="cover" src="${trackCover}" alt="${filename} cover">` :
         'track has no cover';
 
-    const html = `
-      <li class="console-item">
-        track info:
-        filename: ${filename} 
-        duration: ${duration}
-        ${coverHTML}
-      </li>
-    `;
+    // const html = `
+    //   <li class="console-item">
+    //     track info:
+    //     filename: ${filename}
+    //     duration: ${duration}
+    //     ${coverHTML}
+    //   </li>
+    // `;
+    const listItem = document.createElement('li')
+    listItem.classList.add('console-item')
+    listItem.innerHTML = `
+      track info:
+      filename: ${filename} 
+      duration: ${duration}
+      ${coverHTML}`
 
-    // ...
+
+
     if (counters.uploadedToYandex || counters.uploadedToCloudflare) {
-        // counters.wrapper.removeAttribute('hidden')
-        counters.wrapper.classList.remove('hidden')
+        counters.wrapper.classList.add('visible')
     }
 
-
-    // uploadedTracksCounter.innerHTML = allUploadedTrackCount === 1 ?
-    //     `1 track is uploaded` :
-    //     `${allUploadedTrackCount} tracks are uploaded`;
     counters.uploadedToYandex.innerHTML = uploadedTracksCounter.uploadedToYandex === 1 ?
         `&nbsp;&nbsp;> 1 track is uploaded to yandex` :
         `&nbsp;&nbsp;> ${uploadedTracksCounter.uploadedToYandex} tracks are uploaded to yandex`
@@ -153,14 +175,22 @@ window.electronAPI.trackWasUploaded(({uploadedTrack, uploadedTracksCounter}) => 
         `&nbsp;&nbsp;> 1 track is uploaded to cloudflare` :
         `&nbsp;&nbsp;> ${uploadedTracksCounter.uploadedToCloudflare} tracks are uploaded to cloudflare`
 
-    // deletePlaylistButton.disabled = false;
-    addToHTMLConsole(html);
+
+    if (trackCover) {
+        const image = new Image()
+        image.onload = () => addToHTMLConsole(null, listItem);
+        image.onerror = () => addToHTMLConsole(null, listItem);
+
+        image.src = trackCover
+    } else {
+        addToHTMLConsole(null, listItem);
+    }
 });
 
 window.electronAPI.playlistDeleted(() => {
     tracksCounter.innerHTML = '0';
     // deletePlaylistButton.disabled = true;
-    addToHTMLConsole('<li class="console-item">local playlist was deleted</li>');
+    addToHTMLConsole('<li class="console-item visible">local playlist was deleted</li>');
     updateTracksCounter({action: 'reset'});
 });
 
@@ -212,3 +242,18 @@ container.addEventListener('drop', e => {
     //
     // container.classList.remove('active');
 });
+
+
+// window.dispatchEvent(new CustomEvent('reset'))
+window.addEventListener('reset', () => {
+    console.log('player should be resetted')
+    window.electronAPI.reset();
+
+    tracksCounter.classList.remove('visible')
+    synchronizationErrors.classList.remove('visible')
+    counters.wrapper.classList.remove('visible')
+
+    tracksCounter.innerHTML = 'placeholder'
+    htmlConsole.innerHTML = ''
+
+})

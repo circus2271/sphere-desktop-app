@@ -48,7 +48,7 @@ export const mode = {
     showBrowserDevtools: false,
 
     // sendFilesOnlyToCloudflareAndYandex: true,
-    // showBrowserDevtools: true,
+    showBrowserDevtools: true,
 }
 
 export const airtableUrl = `https://api.airtable.com/v0/${BASE_ID}/${FIRST_TABLE_ID}`
