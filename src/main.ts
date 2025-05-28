@@ -47,6 +47,7 @@ const createWindow = () => {
     // }
   })
 
+  ipcMain.on('reset', () => playlist.reset())
   ipcMain.on('deleteAPlaylist', () => {
     playlist.deleteLocalPlaylist()
     playlist.deleteUploadedTracksInfo()

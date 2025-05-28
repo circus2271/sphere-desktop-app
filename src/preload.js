@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     playlistDeleted: (callback) => {ipcRenderer.on('notifyClient:localPlaylistWasDeleted', (_event) => callback())},
 
     deleteAPlaylist: () => ipcRenderer.send('deleteAPlaylist'),
+    reset: () => ipcRenderer.send('reset'),
 
 
     trackIsNotSynchronized: (callback) => {ipcRenderer.on('notifyClient:couldntSynchronizeTrack', (_event, failedTracksAmount) => callback(failedTracksAmount))},
