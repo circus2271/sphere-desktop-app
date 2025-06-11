@@ -10,100 +10,12 @@ const __filename = fileURLToPath(import.meta.url);
 
 
 const outputFolder = path.join(__filename, '../output') // ...
-// const outputFolder = path.join(__filename, './output') // ...
-
-// Function to download the file
-async function downloadFile(trackName) {
-    // const encodedTrackName = url.split('/').pop()
-    // const trackName = decodeURIComponent(encodedTrackName)
-
-    console.log(`attempting to download ${trackName}`)
-
-    let response;
-    try {
-        response = await fetch('https://spheresounds.cc/musicLibrary/' + trackName);
-    } catch(err) {
-        throw new Error(`fetch error`);
-    }
-
-    // Check if the response is OK (status code 200-299)
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Create a writable stream to save the file
-    const filePath = path.join(outputFolder, trackName)
-    // const dest = fs.createWriteStream(filePath);
-    // const dest = fs.createWriteStream(filePath);
-    // const dest = fs.createWriteStream(filePath);
-    const dest = fs.createWriteStream(filePath);
-
-    // Pipe the response body to the writable stream
-    // response.body.pipe(dest);
-    // console.log(1)
-    // response.body.pipeTo(dest);
-
-    // using "reponse.body" doen't work here
-    // convert it as is described here: https://github.com/lovell/sharp/issues/4013#issuecomment-1968847107
-    // that way it works..
-    console.log('response was ok', response.ok)
-    // const convertedSource = Readable.fromWeb(response.body)
-    // const convertedSource = Readable.fromWeb(response.body)
-    // convertedSource.pipe(dest);
-    // console.log(2)
-
-    // Return a promise that resolves when the file is fully written
-    const p = new Promise((resolve, reject) => {
-        dest.on('finish', () => {
-            console.log(`${trackName} is downloaded and saved`)
-            resolve()
-        });
-        dest.on('error', (err) => {
-            console.error(err)
-            console.warn(`some error happened with ${trackName}`)
-            console.warn('the track is skipped')
-
-            reject()
-        });
-    });
-
-    response.body.pipe(dest);
-
-    return p
-}
-
-// Call the function to download the file
-// downloadFile(url)
-//     .then(() => {
-//         console.log('Download completed!');
-//     })
-//     .catch(err => {
-//         console.error(`Error: ${err.message}`);
-//     });
-
-export const splitDataIntoChunks = (data, chunkSize = 10) => {
-    // split data into chunks to bypass airtabble api limit
-    // (send no more then 10 items per request)
-    const chunks = [] // array of arrays
-    const chunksAmount = Math.ceil(data.length/chunkSize)
-
-    for (let i = 0; i < chunksAmount; i++) {
-        // 0, 10
-        // 10, 20
-        // 30, 40
-        const portion = data.slice(i * chunkSize, i * chunkSize + chunkSize)
-        chunks.push(portion)
-    }
-
-    return chunks
-}
-
 
 
 const notDownloadedTracks = []
 const downloadedTracks = []
 
-const downloadTracks = async ({index, urls}) => {
+const downloadTracks = async (urls) => {
     const chunks = splitDataIntoChunks(urls)
 
     for await (let chunk of chunks) {
@@ -126,36 +38,6 @@ const downloadTracks = async ({index, urls}) => {
         })
 
         await Promise.allSettled(promises)
-
-        // await new Promise(r => {
-        //     // setTimeout(r, 5000)
-        //     // setTimeout(r, 2500)
-        //     setTimeout(r, 2500)
-        // })
-
-        // write logs each 10 tracks
-        // fs.writeFileSync(`logs-${index}-errors.json`, JSON.stringify(notDownloadedTracks), 'utf8')//, (err) => {
-        // //     if (err) {
-        // //         // Handle the error
-        // //         console.error('Error writing to the file:', err.message);
-        // //         return; // Exit the function if there's an error
-        // //     }
-        // //
-        // //     // If no error, confirm the write operation
-        // //     console.log('File has been written successfully.');
-        // // });
-
-        // fs.writeFileSync(`logs-${index}-downloaded-tracks.json`, JSON.stringify(downloadedTracks), 'utf8')//, (err) => {
-        //     if (err) {
-        //         // Handle the error
-        //         console.error('Error writing to the file:', err.message);
-        //         return; // Exit the function if there's an error
-        //     }
-        //
-        //     // If no error, confirm the write operation
-        //     console.log('File has been written successfully.');
-        // });
-
     }
 
     console.log(`all tracks are attempted to be downloaded`)
@@ -168,13 +50,90 @@ const downloadTracks = async ({index, urls}) => {
 
 }
 
+// Function to download the file
+// not very intuitive..
+async function downloadFile(url) {
+    const encodedTrackName = url.split('/').pop()
+    const trackName = decodeURIComponent(encodedTrackName)
+
+    console.log(`attempting to download ${trackName}`)
+
+    let response;
+    try {
+        response = await fetch(url)
+    } catch(err) {
+        throw new Error(`fetch error`);
+    }
+
+    // Check if the response is OK (status code 200-299)
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Create a writable stream to save the file
+    const filePath = path.join(outputFolder, trackName)
+    const dest = fs.createWriteStream(filePath);
+
+    // using "reponse.body" doen't work here
+    // convert it as is described here: https://github.com/lovell/sharp/issues/4013#issuecomment-1968847107
+    // that way it works..
+    console.log('response was ok', response.ok)
+
+    // Return a promise that resolves when the file is fully written
+    const p = new Promise((resolve, reject) => {
+        dest.on('finish', () => {
+            console.log(`${trackName} is downloaded and saved`)
+            resolve()
+        });
+        dest.on('error', (err) => {
+            console.error(err)
+            console.warn(`some error happened with ${trackName}`)
+            console.warn('the track is skipped')
+
+            reject()
+        });
+    });
+
+    response.body.pipe(dest);
+
+    return p
+}
+
+
+export function splitDataIntoChunks(data, chunkSize = 10) {
+    // split data into chunks to bypass airtabble api limit
+    // (send no more then 10 items per request)
+    const chunks = [] // array of arrays
+    const chunksAmount = Math.ceil(data.length/chunkSize)
+
+    for (let i = 0; i < chunksAmount; i++) {
+        // 0, 10
+        // 10, 20
+        // 30, 40
+        const portion = data.slice(i * chunkSize, i * chunkSize + chunkSize)
+        chunks.push(portion)
+    }
+
+    return chunks
+}
+
+
+
 // const tracks = [
-//     // ... those tracks (urls) will be proceed further in code)
+//     ... those tracks (urls) will be proceed further in code)
 // ]
 
-import tracks from '../diff-tracks.json' assert { type: 'json' }
-// downloadTracks({index: 2, urls: tracks2})
-(async () => {
+
+// import tracks from '../diff-tracks.json' assert { type: 'json' }
+// // downloadTracks({index: 2, urls: tracks2})
+// (async () => {
+//     // await downloadTracks({index: 4, urls: tracks4})
+//     await downloadTracks({index: 4, urls: tracks})
+// })()
+
+
+// (async () => {
     // await downloadTracks({index: 4, urls: tracks4})
-    await downloadTracks({index: 4, urls: tracks})
-})()
+// })()
+
+await downloadTracks(tracks)
